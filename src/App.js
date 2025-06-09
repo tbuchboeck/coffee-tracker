@@ -466,17 +466,6 @@ const CoffeeTracker = () => {
     'BR', 'CO', 'ET', 'GT', 'HN', 'JM', 'KE', 'PE', 'UG', 'VE', 'CR', 'EC', 'MX', 'NI', 'PA', 'RW', 'TZ', 'YE', 'ID', 'IN', 'VN', 'PG', 'HI'
   ];
 
-  const commonTasteNotes = [
-    'Chocolate: 3, Nutty: 4, Fruity: 2, Floral: 1, Spicy: 2',
-    'Chocolate: 4, Nutty: 3, Caramel: 3, Vanilla: 2',
-    'Fruity: 4, Citrus: 3, Berry: 4, Floral: 2',
-    'Chocolate: 5, Nutty: 4, Earthy: 3, Roasted: 4',
-    'Caramel: 4, Vanilla: 3, Sweet: 4, Smooth: 3',
-    'Berry: 4, Wine: 3, Fruity: 5, Acidic: 3',
-    'Earthy: 4, Herbal: 3, Woody: 3, Bold: 4',
-    'Citrus: 4, Bright: 4, Clean: 3, Light: 3',
-    'Spicy: 3, Peppery: 2, Complex: 4, Rich: 4'
-  ];
 
   const commonPreparationNotes = [
     'Pure espresso',
@@ -1531,7 +1520,15 @@ const CoffeeTracker = () => {
       const newValue = e.target.value;
       setInputValue(newValue);
       onChange(newValue);
-      setIsOpen(true);
+      // Only open dropdown if user is typing and there are matches
+      if (newValue.length > 0) {
+        const hasMatches = options.some(option =>
+          option.toLowerCase().includes(newValue.toLowerCase())
+        );
+        setIsOpen(hasMatches);
+      } else {
+        setIsOpen(false);
+      }
     };
 
     const handleOptionSelect = (option) => {
