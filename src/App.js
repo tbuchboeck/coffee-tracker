@@ -1413,7 +1413,15 @@ const CoffeeTracker = () => {
       const newValue = e.target.value;
       setInputValue(newValue);
       onChange(newValue);
-      setIsOpen(true);
+      // Only open dropdown if user is typing and there are matches
+      if (newValue.length > 0) {
+        const hasMatches = options.some(option =>
+          option.toLowerCase().includes(newValue.toLowerCase())
+        );
+        setIsOpen(hasMatches);
+      } else {
+        setIsOpen(false);
+      }
     };
 
     const handleOptionSelect = (option) => {
@@ -1442,7 +1450,12 @@ const CoffeeTracker = () => {
             type="text"
             value={inputValue}
             onChange={handleInputChange}
-            onFocus={() => setIsOpen(true)}
+            onFocus={() => {
+              // Only open dropdown if field is empty or has short text (likely searching)
+              if (!inputValue || inputValue.length < 10) {
+                setIsOpen(true);
+              }
+            }}
             placeholder={placeholder}
             className={`w-full px-4 py-2 border rounded-lg pr-10 ${
               darkMode 
@@ -1549,7 +1562,12 @@ const CoffeeTracker = () => {
             type="text"
             value={inputValue}
             onChange={handleInputChange}
-            onFocus={() => setIsOpen(true)}
+            onFocus={() => {
+              // Only open dropdown if field is empty or has short text (likely searching)
+              if (!inputValue || inputValue.length < 10) {
+                setIsOpen(true);
+              }
+            }}
             placeholder={placeholder}
             className={`w-full px-4 py-2 border rounded-lg pr-10 ${
               darkMode 
