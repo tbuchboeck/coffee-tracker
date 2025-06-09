@@ -492,6 +492,22 @@ const CoffeeTracker = () => {
     'Temperature adjusted to 95°C'
   ];
 
+  // Taste attributes for the new rating system
+  const tasteAttributes = [
+    { id: 'chocolate', name: 'Chocolate', icon: '🍫' },
+    { id: 'nutty', name: 'Nutty', icon: '🥜' },
+    { id: 'fruity', name: 'Fruity', icon: '🍓' },
+    { id: 'floral', name: 'Floral', icon: '🌸' },
+    { id: 'citrus', name: 'Citrus', icon: '🍋' },
+    { id: 'caramel', name: 'Caramel', icon: '🍯' },
+    { id: 'spicy', name: 'Spicy', icon: '🌶️' },
+    { id: 'earthy', name: 'Earthy', icon: '🌱' },
+    { id: 'roasted', name: 'Roasted', icon: '🔥' },
+    { id: 'acidic', name: 'Acidic', icon: '⚡' },
+    { id: 'bitter', name: 'Bitter', icon: '☕' },
+    { id: 'sweet', name: 'Sweet', icon: '🍭' }
+  ];
+
 
   // Data version for migration management
   const DATA_VERSION = '2.1';
@@ -1491,6 +1507,197 @@ const CoffeeTracker = () => {
     );
   };
 
+  // Enhanced ComboBox that allows both selection and custom input
+  const EnhancedComboBox = ({ value, onChange, options, placeholder, type }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [inputValue, setInputValue] = useState(value || '');
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+      setInputValue(value || '');
+    }, [value]);
+
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+          setIsOpen(false);
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleInputChange = (e) => {
+      const newValue = e.target.value;
+      setInputValue(newValue);
+      onChange(newValue);
+      setIsOpen(true);
+    };
+
+    const handleOptionSelect = (option) => {
+      // For prep notes, append to existing text instead of replacing
+      const newValue = type === 'preparation' && inputValue.trim() ? 
+        `${inputValue}, ${option}` : option;
+      setInputValue(newValue);
+      onChange(newValue);
+      setIsOpen(false);
+    };
+
+    const filteredOptions = options.filter(option =>
+      option.toLowerCase().includes(inputValue.toLowerCase())
+    );
+
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <div className="relative">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            onFocus={() => setIsOpen(true)}
+            placeholder={placeholder}
+            className={`w-full px-4 py-2 border rounded-lg pr-10 ${
+              darkMode 
+                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+            } focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+          />
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${
+              darkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}
+          >
+            <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+
+        {isOpen && (
+          <div className={`absolute z-10 w-full mt-1 ${
+            darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
+          } border rounded-lg shadow-lg max-h-48 overflow-y-auto`}>
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleOptionSelect(option)}
+                  className={`w-full px-4 py-2 text-left hover:${
+                    darkMode ? 'bg-gray-600' : 'bg-gray-100'
+                  } flex items-center justify-between transition-colors`}
+                >
+                  <span className="truncate">{option}</span>
+                  {type === 'preparation' && inputValue.trim() && (
+                    <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      append
+                    </span>
+                  )}
+                </button>
+              ))
+            ) : (
+              <div className={`px-4 py-2 text-sm ${
+                darkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                Type to add custom entry
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // TasteProfile component for visual taste rating
+  const TasteProfile = ({ value, onChange }) => {
+    // Parse existing taste notes to extract ratings
+    const parseExistingTastes = (tasteNotes) => {
+      const profile = {};
+      if (!tasteNotes) return profile;
+      
+      // Try to parse format like "Chocolate: 3, Nutty: 4, Fruity: 2"
+      const matches = tasteNotes.match(/(\w+):\s*(\d+)/gi);
+      if (matches) {
+        matches.forEach(match => {
+          const [, taste, rating] = match.match(/(\w+):\s*(\d+)/i);
+          const normalizedTaste = taste.toLowerCase();
+          const attribute = tasteAttributes.find(attr => 
+            attr.id === normalizedTaste || attr.name.toLowerCase() === normalizedTaste
+          );
+          if (attribute) {
+            profile[attribute.id] = parseInt(rating, 10);
+          }
+        });
+      }
+      return profile;
+    };
+
+    const [tasteProfile, setTasteProfile] = useState(() => parseExistingTastes(value));
+
+    // Convert taste profile back to text format
+    const profileToText = (profile) => {
+      const entries = Object.entries(profile)
+        .filter(([, rating]) => rating > 0)
+        .map(([taste, rating]) => {
+          const attribute = tasteAttributes.find(attr => attr.id === taste);
+          return `${attribute?.name || taste}: ${rating}`;
+        });
+      return entries.join(', ');
+    };
+
+    const updateTasteRating = (tasteId, rating) => {
+      const newProfile = { ...tasteProfile, [tasteId]: rating };
+      setTasteProfile(newProfile);
+      onChange(profileToText(newProfile));
+    };
+
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {tasteAttributes.map(attribute => (
+            <div key={attribute.id} className={`p-3 rounded-lg border ${
+              darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium flex items-center space-x-1">
+                  <span>{attribute.icon}</span>
+                  <span>{attribute.name}</span>
+                </span>
+                <span className={`text-xs px-2 py-1 rounded ${
+                  tasteProfile[attribute.id] > 0 
+                    ? 'bg-amber-100 text-amber-800' 
+                    : darkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {tasteProfile[attribute.id] || 0}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="5"
+                value={tasteProfile[attribute.id] || 0}
+                onChange={(e) => updateTasteRating(attribute.id, parseInt(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
+              />
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>0</span>
+                <span>5</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+          <label className={`block text-xs font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+            Generated Taste Notes:
+          </label>
+          <div className={`text-sm ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+            {profileToText(tasteProfile) || 'Select taste attributes above'}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Prepare radar data for selected coffee
   const getRadarData = (coffee) => {
     const profile = parseTasteProfile(coffee.tasteNotes);
@@ -2145,13 +2352,16 @@ const CoffeeTracker = () => {
                 />
               </div>
 
-              <div>
-                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Taste Notes</label>
-                <ComboBox
+              <div className="md:col-span-2">
+                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                  Taste Profile
+                  <span className={`text-xs ml-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Rate each taste from 0-5
+                  </span>
+                </label>
+                <TasteProfile
                   value={formData.tasteNotes}
                   onChange={(value) => setFormData({...formData, tasteNotes: value})}
-                  options={commonTasteNotes}
-                  placeholder="e.g. Chocolate: 3, Nutty: 4, Fruity: 2"
                 />
               </div>
 
@@ -2213,11 +2423,12 @@ const CoffeeTracker = () => {
 
               <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Preparation Notes</label>
-                <ComboBox
+                <EnhancedComboBox
                   value={formData.preparationNotes}
                   onChange={(value) => setFormData({...formData, preparationNotes: value})}
                   options={commonPreparationNotes}
                   placeholder="e.g. Pure espresso, Americano style, Extra sieve"
+                  type="preparation"
                 />
                 <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   How you prepared this coffee when rating it
