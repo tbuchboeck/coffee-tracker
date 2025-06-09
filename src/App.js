@@ -1413,15 +1413,7 @@ const CoffeeTracker = () => {
       const newValue = e.target.value;
       setInputValue(newValue);
       onChange(newValue);
-      // Only open dropdown if user is typing and there are matches
-      if (newValue.length > 0) {
-        const hasMatches = options.some(option =>
-          option.toLowerCase().includes(newValue.toLowerCase())
-        );
-        setIsOpen(hasMatches);
-      } else {
-        setIsOpen(false);
-      }
+      // Don't auto-open dropdown when editing - only manual via arrow click
     };
 
     const handleOptionSelect = (option) => {
@@ -1451,10 +1443,7 @@ const CoffeeTracker = () => {
             value={inputValue}
             onChange={handleInputChange}
             onFocus={() => {
-              // Only open dropdown if field is empty or has short text (likely searching)
-              if (!inputValue || inputValue.length < 10) {
-                setIsOpen(true);
-              }
+              // Don't auto-open dropdown - user can click arrow if they want options
             }}
             placeholder={placeholder}
             className={`w-full px-4 py-2 border rounded-lg pr-10 ${
@@ -1533,15 +1522,7 @@ const CoffeeTracker = () => {
       const newValue = e.target.value;
       setInputValue(newValue);
       onChange(newValue);
-      // Only open dropdown if user is typing and there are matches
-      if (newValue.length > 0) {
-        const hasMatches = options.some(option =>
-          option.toLowerCase().includes(newValue.toLowerCase())
-        );
-        setIsOpen(hasMatches);
-      } else {
-        setIsOpen(false);
-      }
+      // Don't auto-open dropdown when editing - only manual via arrow click
     };
 
     const handleOptionSelect = (option) => {
@@ -1563,10 +1544,7 @@ const CoffeeTracker = () => {
             value={inputValue}
             onChange={handleInputChange}
             onFocus={() => {
-              // Only open dropdown if field is empty or has short text (likely searching)
-              if (!inputValue || inputValue.length < 10) {
-                setIsOpen(true);
-              }
+              // Don't auto-open dropdown - user can click arrow if they want options
             }}
             placeholder={placeholder}
             className={`w-full px-4 py-2 border rounded-lg pr-10 ${
