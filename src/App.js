@@ -446,6 +446,7 @@ const CoffeeTracker = () => {
     const saved = localStorage.getItem('collapsedRoasters');
     return saved ? JSON.parse(saved) : {};
   });
+  const [tasteProfileCollapsed, setTasteProfileCollapsed] = useState(false);
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
 
@@ -1394,6 +1395,7 @@ const CoffeeTracker = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [inputValue, setInputValue] = useState(value || '');
     const dropdownRef = useRef(null);
+    const inputRef = useRef(null);
 
     useEffect(() => {
       setInputValue(value || '');
@@ -1420,6 +1422,14 @@ const CoffeeTracker = () => {
       setInputValue(option);
       onChange(option);
       setIsOpen(false);
+      // Keep focus on the input so user can continue typing
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          // Move cursor to end of text
+          inputRef.current.setSelectionRange(inputValue.length, inputValue.length);
+        }
+      }, 0);
     };
 
     const filteredOptions = options.filter(option =>
@@ -1439,6 +1449,7 @@ const CoffeeTracker = () => {
       <div className="relative" ref={dropdownRef}>
         <div className="relative">
           <input
+            ref={inputRef}
             type="text"
             value={inputValue}
             onChange={handleInputChange}
@@ -1503,6 +1514,7 @@ const CoffeeTracker = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [inputValue, setInputValue] = useState(value || '');
     const dropdownRef = useRef(null);
+    const inputRef = useRef(null);
 
     useEffect(() => {
       setInputValue(value || '');
@@ -1530,6 +1542,14 @@ const CoffeeTracker = () => {
       setInputValue(option);
       onChange(option);
       setIsOpen(false);
+      // Keep focus on the input so user can continue typing
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          // Move cursor to end of text
+          inputRef.current.setSelectionRange(option.length, option.length);
+        }
+      }, 0);
     };
 
     const filteredOptions = options.filter(option =>
@@ -2330,25 +2350,43 @@ const CoffeeTracker = () => {
                 </div>
               </div>
 
-              <div>
-                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Crema Rating</label>
-                <StarRating 
-                  rating={formData.cremaRating} 
-                  onRatingChange={(rating) => setFormData({...formData, cremaRating: rating})}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Crema Rating</label>
+                  <StarRating 
+                    rating={formData.cremaRating} 
+                    onRatingChange={(rating) => setFormData({...formData, cremaRating: rating})}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Taste Rating</label>
+                  <StarRating 
+                    rating={formData.tasteRating} 
+                    onRatingChange={(rating) => setFormData({...formData, tasteRating: rating})}
+                  />
+                </div>
               </div>
 
               <div className="md:col-span-2">
-                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                  Taste Profile
-                  <span className={`text-xs ml-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    Rate each taste from 0-5
-                  </span>
-                </label>
-                <TasteProfile
-                  value={formData.tasteNotes}
-                  onChange={(value) => setFormData({...formData, tasteNotes: value})}
-                />
+                <button
+                  type="button"
+                  onClick={() => setTasteProfileCollapsed(!tasteProfileCollapsed)}
+                  className={`flex items-center justify-between w-full text-left mb-2`}
+                >
+                  <label className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Taste Profile
+                    <span className={`text-xs ml-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Rate each taste from 0-5
+                    </span>
+                  </label>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${tasteProfileCollapsed ? '' : 'rotate-180'} ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+                </button>
+                {!tasteProfileCollapsed && (
+                  <TasteProfile
+                    value={formData.tasteNotes}
+                    onChange={(value) => setFormData({...formData, tasteNotes: value})}
+                  />
+                )}
               </div>
 
               <div>
@@ -2359,14 +2397,6 @@ const CoffeeTracker = () => {
                   value={formData.url}
                   onChange={(e) => setFormData({...formData, url: e.target.value})}
                   className={`w-full px-3 py-2 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors`}
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Taste Rating</label>
-                <StarRating 
-                  rating={formData.tasteRating} 
-                  onRatingChange={(rating) => setFormData({...formData, tasteRating: rating})}
                 />
               </div>
 
@@ -2409,13 +2439,53 @@ const CoffeeTracker = () => {
 
               <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Preparation Notes</label>
-                <EnhancedComboBox
-                  value={formData.preparationNotes}
-                  onChange={(value) => setFormData({...formData, preparationNotes: value})}
-                  options={commonPreparationNotes}
-                  placeholder="e.g. Pure espresso, Americano style, Extra sieve"
-                  type="preparation"
-                />
+                <div className="space-y-2">
+                  <div>
+                    <label className={`block text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-1`}>Select from common preparations:</label>
+                    <select
+                      value={formData.preparationNotes && commonPreparationNotes.includes(formData.preparationNotes) ? formData.preparationNotes : ''}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setFormData({...formData, preparationNotes: e.target.value});
+                        }
+                      }}
+                      disabled={formData.preparationNotes && !commonPreparationNotes.includes(formData.preparationNotes)}
+                      className={`w-full px-3 py-2 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors ${
+                        formData.preparationNotes && !commonPreparationNotes.includes(formData.preparationNotes) ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <option value="">-- Select a preparation method --</option>
+                      {commonPreparationNotes.map((note, index) => (
+                        <option key={index} value={note}>{note}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={`text-center ${darkMode ? 'text-gray-400' : 'text-gray-600'} text-sm`}>
+                    — OR —
+                  </div>
+                  <div>
+                    <label className={`block text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-1`}>Enter custom preparation notes:</label>
+                    <input
+                      type="text"
+                      value={formData.preparationNotes && !commonPreparationNotes.includes(formData.preparationNotes) ? formData.preparationNotes : ''}
+                      onChange={(e) => setFormData({...formData, preparationNotes: e.target.value})}
+                      disabled={formData.preparationNotes && commonPreparationNotes.includes(formData.preparationNotes)}
+                      placeholder="e.g. V60 with 15g/250ml, 2:30 brew time"
+                      className={`w-full px-3 py-2 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors ${
+                        formData.preparationNotes && commonPreparationNotes.includes(formData.preparationNotes) ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    />
+                  </div>
+                  {formData.preparationNotes && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, preparationNotes: ''})}
+                      className={`text-xs ${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-700'} underline`}
+                    >
+                      Clear selection
+                    </button>
+                  )}
+                </div>
                 <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   How you prepared this coffee when rating it
                 </p>
