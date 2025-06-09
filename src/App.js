@@ -1534,16 +1534,10 @@ const CoffeeTracker = () => {
       setIsOpen(true);
     };
 
-    const handleOptionSelect = (option, shouldAppend = false) => {
-      // For prep notes, allow both replace and append behavior
-      let newValue;
-      if (type === 'preparation' && shouldAppend && inputValue.trim()) {
-        newValue = `${inputValue}, ${option}`;
-      } else {
-        newValue = option;
-      }
-      setInputValue(newValue);
-      onChange(newValue);
+    const handleOptionSelect = (option) => {
+      // Simply set the selected option, then user can edit it freely
+      setInputValue(option);
+      onChange(option);
       setIsOpen(false);
     };
 
@@ -1582,49 +1576,18 @@ const CoffeeTracker = () => {
             darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
           } border rounded-lg shadow-lg max-h-48 overflow-y-auto`}>
             {filteredOptions.length > 0 ? (
-              filteredOptions.flatMap((option, index) => {
-                const buttons = [];
-                
-                // Always show the replace option
-                buttons.push(
-                  <button
-                    key={`${index}-replace`}
-                    type="button"
-                    onClick={() => handleOptionSelect(option, false)}
-                    className={`w-full px-4 py-2 text-left hover:${
-                      darkMode ? 'bg-gray-600' : 'bg-gray-100'
-                    } flex items-center justify-between transition-colors`}
-                  >
-                    <span className="truncate">{option}</span>
-                    <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                      replace
-                    </span>
-                  </button>
-                );
-                
-                // Show append option only if there's existing text for preparation notes
-                if (type === 'preparation' && inputValue.trim()) {
-                  buttons.push(
-                    <button
-                      key={`${index}-append`}
-                      type="button"
-                      onClick={() => handleOptionSelect(option, true)}
-                      className={`w-full px-4 py-2 text-left hover:${
-                        darkMode ? 'bg-gray-600' : 'bg-gray-100'
-                      } flex items-center justify-between transition-colors border-l-2 ${
-                        darkMode ? 'border-amber-500' : 'border-amber-400'
-                      }`}
-                    >
-                      <span className="truncate">+ {option}</span>
-                      <span className={`text-xs ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>
-                        append
-                      </span>
-                    </button>
-                  );
-                }
-                
-                return buttons;
-              })
+              filteredOptions.map((option, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleOptionSelect(option)}
+                  className={`w-full px-4 py-2 text-left hover:${
+                    darkMode ? 'bg-gray-600' : 'bg-gray-100'
+                  } transition-colors`}
+                >
+                  <span className="truncate">{option}</span>
+                </button>
+              ))
             ) : (
               <div className={`px-4 py-2 text-sm ${
                 darkMode ? 'text-gray-400' : 'text-gray-500'
