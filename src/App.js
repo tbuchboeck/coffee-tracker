@@ -2644,6 +2644,11 @@ const CoffeeTracker = () => {
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-3">
                                 <h4 className="text-lg font-semibold">Preparation #{coffees.indexOf(coffee) + 1}</h4>
+                                {coffee.brewingMethod && (
+                                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${darkMode ? 'bg-blue-900 text-blue-100' : 'bg-blue-100 text-blue-800'}`} title="Brewing method">
+                                    {brewingMethods.find(m => m.id === coffee.brewingMethod)?.icon} {brewingMethods.find(m => m.id === coffee.brewingMethod)?.name || coffee.brewingMethod}
+                                  </span>
+                                )}
                                 {coffee.favorite && <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />}
                               </div>
                               
