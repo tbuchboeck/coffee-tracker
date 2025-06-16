@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = 'coffee-tracker-v1';
+const CACHE_NAME = 'coffee-tracker-v2';
 const urlsToCache = [
   '/',
   '/static/css/main.css',
