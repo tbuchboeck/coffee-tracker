@@ -2,435 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Coffee, Star, Search, Trash2, Edit3, Calendar, Percent, ExternalLink, BarChart3, Moon, Sun, Download, Upload, FileText, RefreshCw, RotateCcw, Copy, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
+import { personalCoffees } from './personal_coffees';
 
-// Default sample data
-const defaultCoffees = [
-  {
-    "id": 17,
-    "roaster": "DieRöster - Suchan Bologna",
-    "description": "leichte Frucht, Schokolade, ausgeglichen, bittere Schokoladenoten",
-    "favorite": true,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "8",
-    "percentArabica": 90,
-    "percentRobusta": 10,
-    "cuppingTime": new Date("2023-01-20 10:16:45"),
-    "cremaRating": 3,
-    "tasteRating": 3,
-    "tasteNotes": "light fruity, chocolate, balanced, bitter chocolate notes",
-    "url": "https://www.dieroester.at/roester/suchan/bologna",
-    "comment": "90/10 Mischung aus Brasilien, Indien, Äthiopien, Nicaragua",
-    "origin": "BR,IN,ET,NI",
-    "roastLevel": "medium-dark",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "43.20",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Pure espresso"
-  },
-  {
-    "id": 11,
-    "roaster": "DieRöster - Suchan Palermo",
-    "description": "schokoladig nussig holzig",
-    "favorite": true,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "15",
-    "percentArabica": 100,
-    "percentRobusta": 0,
-    "cuppingTime": new Date("2023-03-15 21:48:47"),
-    "cremaRating": 5,
-    "tasteRating": 5,
-    "tasteNotes": "nutty, woody, chocolate, very low acidity",
-    "url": "https://www.dieroester.at/roester/suchan/palermo",
-    "comment": "Parade-Espresso für Leute, die viel Aroma und wenig Säure möchten",
-    "origin": "IT",
-    "roastLevel": "dark",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "45.60",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Pure espresso"
-  },
-  {
-    "id": 20,
-    "roaster": "Lavazza",
-    "description": "Barista intenso",
-    "favorite": true,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "10",
-    "percentArabica": 50,
-    "percentRobusta": 50,
-    "cuppingTime": new Date("2024-01-10 19:03:35"),
-    "cremaRating": 5,
-    "tasteRating": 5,
-    "tasteNotes": "cocoa, wood, hazelnut, full body, intense aftertaste",
-    "url": "https://www.lavazza.com/en/coffee-beans/espresso-barista-intenso",
-    "comment": "Intensity 9/10, perfect for espresso and moka",
-    "origin": "BR,AS",
-    "roastLevel": "dark",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "19.99",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Pure espresso"
-  },
-  {
-    "id": 19,
-    "roaster": "Lavazza",
-    "description": "Espresso Italiano Cremoso",
-    "favorite": true,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "9",
-    "percentArabica": 30,
-    "percentRobusta": 70,
-    "cuppingTime": new Date("2023-10-15 12:29:58"),
-    "cremaRating": 5,
-    "tasteRating": 5,
-    "tasteNotes": "chocolate, spices, cocoa, long-lasting crema",
-    "url": "https://www.lavazza.com/en/coffee/coffee-beans/espresso-cremoso-1-kg.html",
-    "comment": "Röstgrad mittel, Intensity 8/10, from Latin America and Southeast Asia",
-    "origin": "LA,AS",
-    "roastLevel": "medium",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "16.49",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Pure espresso"
-  },
-  {
-    "id": 21,
-    "roaster": "Lavazza",
-    "description": "Gran Cremoso",
-    "favorite": true,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "19",
-    "percentArabica": 70,
-    "percentRobusta": 30,
-    "cuppingTime": new Date("2024-03-23 07:41:56"),
-    "cremaRating": 4,
-    "tasteRating": 4,
-    "tasteNotes": "chocolate, dried fruits, balanced, well-rounded",
-    "url": "https://www.lavazza.com",
-    "comment": "South America and Southeast Asia blend",
-    "origin": "SA,AS",
-    "roastLevel": "medium",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "26.99",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Pure espresso"
-  },
-  {
-    "id": 9,
-    "roaster": "220 Grad",
-    "description": "Guatemala La Labor",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "15",
-    "percentArabica": 100,
-    "percentRobusta": 0,
-    "cuppingTime": new Date("2020-07-11 18:02:56"),
-    "cremaRating": 4,
-    "tasteRating": 4,
-    "tasteNotes": "almonds, pecans, dried fruits, milk chocolate, lively acidity",
-    "url": "https://www.220grad.com/produkt/guatemala-la-labor-espresso-roestung/",
-    "comment": "Red Bourbon variety, Finca La Labor, 1520m altitude",
-    "origin": "GT",
-    "roastLevel": "medium",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "v60",
-    "price": "38.30",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Pure espresso"
-  },
-  {
-    "id": 7,
-    "roaster": "220 Grad",
-    "description": "Papua Neuguinea Wagi Valley",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "11",
-    "percentArabica": 100,
-    "percentRobusta": 0,
-    "cuppingTime": new Date("2018-12-27 14:20:02"),
-    "cremaRating": 4,
-    "tasteRating": 4,
-    "tasteNotes": "dark chocolate, nuts, creamy body, balanced acidity",
-    "url": "https://www.220grad.com/produkt/papua-neuguinea-tairora-espresso-roestung/",
-    "comment": "Typica variety, 1800m altitude, washed processing",
-    "origin": "PG",
-    "roastLevel": "medium",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "41.50",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Pure espresso"
-  },
-  {
-    "id": 16,
-    "roaster": "220 Grad",
-    "description": "Mexiko Mischung",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "9",
-    "percentArabica": 80,
-    "percentRobusta": 20,
-    "cuppingTime": new Date("2024-03-28 14:40:31"),
-    "cremaRating": 4,
-    "tasteRating": 4,
-    "tasteNotes": "nutty, caramel, milk chocolate, medium body",
-    "url": "https://www.220grad.com",
-    "comment": "Mexiko blend with 20% robusta for extra crema",
-    "origin": "MX",
-    "roastLevel": "medium-dark",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "35.90",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Pure espresso"
-  },
-  {
-    "id": 18,
-    "roaster": "220 Grad",
-    "description": "Honduras San Rafael",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "11",
-    "percentArabica": 100,
-    "percentRobusta": 0,
-    "cuppingTime": new Date("2024-04-12 09:15:45"),
-    "cremaRating": 4,
-    "tasteRating": 5,
-    "tasteNotes": "chocolate, brown sugar, peach, honey, clean finish",
-    "url": "https://www.220grad.com/produkt/honduras-san-rafael/",
-    "comment": "Catuai variety, 1500m altitude, honey processed",
-    "origin": "HN",
-    "roastLevel": "medium",
-    "brewingMethod": "v60",
-    "recommendedMethod": "v60",
-    "price": "39.90",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "V60 pour over, 15g coffee to 250ml water"
-  },
-  {
-    "id": 14,
-    "roaster": "Rösterei Fuchs",
-    "description": "Kenia AA Plus",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "13",
-    "percentArabica": 100,
-    "percentRobusta": 0,
-    "cuppingTime": new Date("2024-02-14 16:22:11"),
-    "cremaRating": 3,
-    "tasteRating": 5,
-    "tasteNotes": "blackcurrant, wine-like, bright acidity, complex",
-    "url": "https://www.roesterei-fuchs.de/kenia-aa-plus",
-    "comment": "SL28/SL34 varieties, 1700-1800m altitude, fully washed",
-    "origin": "KE",
-    "roastLevel": "light-medium",
-    "brewingMethod": "v60",
-    "recommendedMethod": "v60",
-    "price": "48.50",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "V60 pour over, 16g coffee to 260ml water, 2:30 brew time"
-  },
-  {
-    "id": 15,
-    "roaster": "Rösterei Fuchs",
-    "description": "Colombia Supremo",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "10",
-    "percentArabica": 100,
-    "percentRobusta": 0,
-    "cuppingTime": new Date("2024-05-02 08:45:22"),
-    "cremaRating": 4,
-    "tasteRating": 4,
-    "tasteNotes": "caramel, orange, milk chocolate, smooth",
-    "url": "https://www.roesterei-fuchs.de/colombia-supremo",
-    "comment": "Castillo variety, 1600m altitude, washed processing",
-    "origin": "CO",
-    "roastLevel": "medium",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "36.90",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "18g dose, 27s extraction, 36g yield"
-  },
-  {
-    "id": 6,
-    "roaster": "Mövenpick",
-    "description": "Der Kräftige",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "9",
-    "percentArabica": 70,
-    "percentRobusta": 30,
-    "cuppingTime": new Date("2018-07-26 18:45:14"),
-    "cremaRating": 4,
-    "tasteRating": 3,
-    "tasteNotes": "strong, robust, chocolate, earthy",
-    "url": "https://www.moevenpick-cafe.com",
-    "comment": "Strong blend, intensity 5/5",
-    "origin": "SA,AS,AF",
-    "roastLevel": "dark",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "24.99",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Pure espresso"
-  },
-  {
-    "id": 12,
-    "roaster": "Mövenpick",
-    "description": "Espresso",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "8",
-    "percentArabica": 100,
-    "percentRobusta": 0,
-    "cuppingTime": new Date("2024-01-28 11:30:45"),
-    "cremaRating": 3,
-    "tasteRating": 3,
-    "tasteNotes": "balanced, mild chocolate, slight fruitiness",
-    "url": "https://www.moevenpick-cafe.com/espresso",
-    "comment": "100% Arabica espresso blend",
-    "origin": "CA,SA",
-    "roastLevel": "medium-dark",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "27.99",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Pure espresso"
-  },
-  {
-    "id": 13,
-    "roaster": "Tchibo",
-    "description": "Barista Caffè Crema",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "12",
-    "percentArabica": 100,
-    "percentRobusta": 0,
-    "cuppingTime": new Date("2024-04-22 09:15:30"),
-    "cremaRating": 3,
-    "tasteRating": 3,
-    "tasteNotes": "mild, creamy, slight acidity, caramel notes",
-    "url": "https://www.tchibo.de/barista-caffe-crema",
-    "comment": "Light to medium roast, good for lungo",
-    "origin": "BR,CO",
-    "roastLevel": "light-medium",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "21.99",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Lungo extraction, 20g dose for 110ml"
-  },
-  {
-    "id": 22,
-    "roaster": "Tchibo",
-    "description": "Barista Espresso",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "9",
-    "percentArabica": 100,
-    "percentRobusta": 0,
-    "cuppingTime": new Date("2024-05-18 14:25:15"),
-    "cremaRating": 3,
-    "tasteRating": 3,
-    "tasteNotes": "chocolate, nuts, low acidity, smooth",
-    "url": "https://www.tchibo.de/products/280387747392/barista-espresso",
-    "comment": "Sehr wenig Säure, 100% Fairtrade, drum roasted",
-    "origin": "BR",
-    "roastLevel": "medium",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "19.99",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Pure espresso"
-  },
-  {
-    "id": 23,
-    "roaster": "Tchibo",
-    "description": "Barista Espresso Dark",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "10",
-    "percentArabica": 70,
-    "percentRobusta": 30,
-    "cuppingTime": new Date("2024-06-22 11:33:01"),
-    "cremaRating": 3,
-    "tasteRating": 3,
-    "tasteNotes": "roasted nuts, velvety dark crema, intense",
-    "url": "https://www.tchibo.de",
-    "comment": "India and Brazil blend, dark roast",
-    "origin": "IN,BR",
-    "roastLevel": "dark",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "22.99",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Pure espresso"
-  },
-  {
-    "id": 24,
-    "roaster": "Tchibo",
-    "description": "Cafe Crema Barista",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "13",
-    "percentArabica": 100,
-    "percentRobusta": 0,
-    "cuppingTime": new Date("2024-06-22 11:33:37"),
-    "cremaRating": 3,
-    "tasteRating": 3,
-    "tasteNotes": "mild, balanced, fruity notes, light body",
-    "url": "https://www.tchibo.de",
-    "comment": "Perfect for cafe crema, light roast",
-    "origin": "CO,BR",
-    "roastLevel": "light",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "20.99",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Cafe crema, 8g dose for 120ml"
-  }
-];
+// Personal coffee collection - your complete 25 coffee database
+const defaultCoffees = personalCoffees;
 
 const CoffeeTracker = () => {
   const [coffees, setCoffees] = useState([]);
@@ -459,7 +34,8 @@ const CoffeeTracker = () => {
     { id: 'aeropress', name: 'AeroPress', icon: '💉' },
     { id: 'moka', name: 'Moka Pot', icon: '🫗' },
     { id: 'dripper', name: 'Dripper', icon: '☕' },
-    { id: 'filter', name: 'Filter Coffee', icon: '📄' }
+    { id: 'filter', name: 'Filter Coffee', icon: '📄' },
+    { id: 'coldbrew', name: 'Cold Brew', icon: '🧊' }
   ];
 
   // Common options for dropdowns
@@ -479,7 +55,12 @@ const CoffeeTracker = () => {
     'Medium grind, normal extraction',
     'Pre-infusion for 10 seconds',
     'Temperature adjusted to 90°C',
-    'Temperature adjusted to 95°C'
+    'Temperature adjusted to 95°C',
+    'Cold brew - 12 hours steep time, coarse grind',
+    'Cold brew - 18 hours steep time, medium-coarse grind',
+    'Cold brew - 24 hours steep time, very coarse grind',
+    'Cold brew concentrate - diluted 1:1 with water',
+    'Cold brew concentrate - diluted 1:2 with milk'
   ];
 
   // Taste attributes for the new rating system
@@ -694,14 +275,41 @@ const CoffeeTracker = () => {
     if (!coffee.price || !coffee.packageSize) return null;
     
     const pricePerGram = parseFloat(coffee.price) / coffee.packageSize;
-    // Typical espresso shot uses 18-20g, let's use 18g as default
-    const gramsPerCup = coffee.brewingMethod === 'filter' ? 15 : 18;
+    
+    // Use actual coffee amount if specified, otherwise use method defaults
+    let gramsPerCup;
+    if (coffee.coffeeAmount && !isNaN(parseFloat(coffee.coffeeAmount))) {
+      gramsPerCup = parseFloat(coffee.coffeeAmount);
+    } else {
+      // Different brewing methods use different amounts of coffee (defaults)
+      switch(coffee.brewingMethod) {
+        case 'coldbrew':
+          gramsPerCup = 30; // Cold brew typically uses more coffee
+          break;
+        case 'filter':
+        case 'v60':
+        case 'chemex':
+        case 'dripper':
+          gramsPerCup = 15; // Pour over methods
+          break;
+        case 'frenchpress':
+          gramsPerCup = 17; // French press
+          break;
+        case 'espresso':
+        case 'moka':
+        default:
+          gramsPerCup = 18; // Espresso-based methods
+          break;
+      }
+    }
+    
     const costPerCup = pricePerGram * gramsPerCup;
     
     return {
       costPerCup: costPerCup.toFixed(3),
       pricePerKg: (parseFloat(coffee.price) / coffee.packageSize * 1000).toFixed(2),
-      currency: coffee.currency || 'EUR'
+      currency: coffee.currency || 'EUR',
+      gramsUsed: gramsPerCup
     };
   };
 
@@ -823,7 +431,7 @@ const CoffeeTracker = () => {
     const priceAnalysis = coffeesWithPrice.map(coffee => {
       const cost = calculateCostPerCup(coffee);
       return {
-        name: coffee.roaster.split(' - ')[0],
+        name: `${coffee.roaster} - ${coffee.description}`,
         coffee: coffee.description,
         costPerCup: parseFloat(cost.costPerCup),
         pricePerKg: parseFloat(cost.pricePerKg),
@@ -846,6 +454,7 @@ const CoffeeTracker = () => {
     grinded: false,
     grindingTime: '',
     grindingDegree: '',
+    coffeeAmount: '', // Amount of coffee used in grams
     percentArabica: 100,
     percentRobusta: 0,
     cremaRating: 0,
@@ -872,6 +481,7 @@ const CoffeeTracker = () => {
       grinded: false,
       grindingTime: '',
       grindingDegree: '',
+      coffeeAmount: '',
       percentArabica: 100,
       percentRobusta: 0,
       cremaRating: 0,
@@ -900,6 +510,7 @@ const CoffeeTracker = () => {
       percentRobusta: parseInt(formData.percentRobusta),
       grindingTime: formData.grindingTime || '',
       grindingDegree: formData.grindingDegree || '',
+      coffeeAmount: formData.coffeeAmount || '',
       cremaRating: parseInt(formData.cremaRating),
       tasteRating: parseInt(formData.tasteRating),
       tasteNotes: formData.tasteNotes || '',
@@ -927,6 +538,7 @@ const CoffeeTracker = () => {
       grinded: coffee.grinded,
       grindingTime: coffee.grindingTime || '',
       grindingDegree: coffee.grindingDegree || '',
+      coffeeAmount: coffee.coffeeAmount || '',
       percentArabica: coffee.percentArabica,
       percentRobusta: coffee.percentRobusta,
       cremaRating: coffee.cremaRating,
@@ -1007,6 +619,16 @@ const CoffeeTracker = () => {
     setEditingCoffee(newCoffee);
     setShowAddForm(true);
     scrollToForm();
+  };
+
+  const handleToggleFavorite = (id) => {
+    setCoffees(coffees.map(coffee => 
+      coffee.id === id ? { ...coffee, favorite: !coffee.favorite } : coffee
+    ));
+  };
+
+  const handleDuplicate = (coffee) => {
+    handleCopy(coffee);
   };
 
   // Export data to JSON file
@@ -1350,20 +972,20 @@ const CoffeeTracker = () => {
         case 'priceLowHigh':
           const costA = calculateCostPerCup(a);
           const costB = calculateCostPerCup(b);
-          if (!costA) return 1;
-          if (!costB) return -1;
+          if (!costA || !costA.costPerCup) return 1;
+          if (!costB || !costB.costPerCup) return -1;
           return parseFloat(costA.costPerCup) - parseFloat(costB.costPerCup);
         case 'priceHighLow':
           const costA2 = calculateCostPerCup(a);
           const costB2 = calculateCostPerCup(b);
-          if (!costA2) return 1;
-          if (!costB2) return -1;
+          if (!costA2 || !costA2.costPerCup) return 1;
+          if (!costB2 || !costB2.costPerCup) return -1;
           return parseFloat(costB2.costPerCup) - parseFloat(costA2.costPerCup);
         case 'value':
           const valueA = calculateValueScore(a);
           const valueB = calculateValueScore(b);
-          if (!valueA) return 1;
-          if (!valueB) return -1;
+          if (!valueA || isNaN(valueA)) return 1;
+          if (!valueB || isNaN(valueB)) return -1;
           return parseFloat(valueB) - parseFloat(valueA);
         case 'date':
         default:
@@ -1374,7 +996,7 @@ const CoffeeTracker = () => {
   const StarRating = ({ rating, onRatingChange, readOnly = false, size = 'normal' }) => {
     const sizeClass = size === 'small' ? 'w-4 h-4' : 'w-5 h-5';
     return (
-      <div className="flex space-x-1">
+      <div className="flex space-x-1 flex-nowrap">
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
@@ -1509,107 +1131,240 @@ const CoffeeTracker = () => {
     );
   };
 
-  // Enhanced ComboBox that allows both selection and custom input
-  const EnhancedComboBox = ({ value, onChange, options, placeholder, type }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [inputValue, setInputValue] = useState(value || '');
-    const dropdownRef = useRef(null);
-    const inputRef = useRef(null);
+  // Removed unused EnhancedComboBox component
 
-    useEffect(() => {
-      setInputValue(value || '');
-    }, [value]);
-
-    useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-          setIsOpen(false);
-        }
-      };
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const handleInputChange = (e) => {
-      const newValue = e.target.value;
-      setInputValue(newValue);
-      onChange(newValue);
-      // Don't auto-open dropdown when editing - only manual via arrow click
-    };
-
-    const handleOptionSelect = (option) => {
-      // Simply set the selected option, then user can edit it freely
-      setInputValue(option);
-      onChange(option);
-      setIsOpen(false);
-      // Keep focus on the input so user can continue typing
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          // Move cursor to end of text
-          inputRef.current.setSelectionRange(option.length, option.length);
-        }
-      }, 0);
-    };
-
-    const filteredOptions = options.filter(option =>
-      option.toLowerCase().includes(inputValue.toLowerCase())
-    );
-
+  // CoffeeCard component for individual coffee display
+  const CoffeeCard = ({ coffee, onEdit, onDelete, onToggleFavorite, onDuplicate, darkMode, onShowRadar }) => {
     return (
-      <div className="relative" ref={dropdownRef}>
-        <div className="relative">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={handleInputChange}
-            onFocus={() => {
-              // Don't auto-open dropdown - user can click arrow if they want options
-            }}
-            placeholder={placeholder}
-            className={`w-full px-4 py-2 border rounded-lg pr-10 ${
-              darkMode 
-                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-            } focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
-          />
-          <button
-            type="button"
-            onClick={() => setIsOpen(!isOpen)}
-            className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${
-              darkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}
-          >
-            <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
+      <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-4 md:p-6 hover:shadow-2xl transition-all`}>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center space-x-3 mb-3">
+              <h3 className="text-lg sm:text-xl font-bold break-words">{coffee.roaster}</h3>
+              {coffee.favorite && (
+                <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+              )}
+              {coffee.roastLevel && (
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${getRoastBadge(coffee.roastLevel).bg} ${getRoastBadge(coffee.roastLevel).text}`}>
+                  {getRoastBadge(coffee.roastLevel).label}
+                </span>
+              )}
+              {coffee.brewingMethod && (
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${darkMode ? 'bg-blue-900 text-blue-100' : 'bg-blue-100 text-blue-800'}`} title="Your preferred method">
+                  👤 {brewingMethods.find(m => m.id === coffee.brewingMethod)?.icon} {brewingMethods.find(m => m.id === coffee.brewingMethod)?.name || coffee.brewingMethod}
+                </span>
+              )}
+              {coffee.recommendedMethod && coffee.recommendedMethod !== coffee.brewingMethod && (
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${darkMode ? 'bg-green-900 text-green-100' : 'bg-green-100 text-green-800'}`} title="Roaster's recommendation">
+                  🏪 {brewingMethods.find(m => m.id === coffee.recommendedMethod)?.icon} {brewingMethods.find(m => m.id === coffee.recommendedMethod)?.name || coffee.recommendedMethod}
+                </span>
+              )}
+            </div>
+            
+            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>{coffee.description}</p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              <div className="flex items-center space-x-2">
+                <Percent className="w-4 h-4 text-gray-500" />
+                <span className="text-sm">
+                  {coffee.percentArabica}% Arabica / {coffee.percentRobusta}% Robusta
+                </span>
+              </div>
+              
+              {(coffee.grindingDegree || coffee.coffeeAmount) && (
+                <div className="flex items-center space-x-2 flex-wrap">
+                  {coffee.grindingDegree && (
+                    <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                      Grinder Level: {coffee.grindingDegree}
+                    </span>
+                  )}
+                  {coffee.coffeeAmount && (
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      {coffee.coffeeAmount}g coffee
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4 text-gray-500" />
+                <span className="text-sm">
+                  {new Date(coffee.cuppingTime).toLocaleDateString()}
+                </span>
+              </div>
+              
+              {coffee.price && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                    {coffee.price} {coffee.currency || 'EUR'} / {coffee.packageSize || 1000}g
+                  </span>
+                </div>
+              )}
+            </div>
 
-        {isOpen && (
-          <div className={`absolute z-10 w-full mt-1 ${
-            darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-          } border rounded-lg shadow-lg max-h-48 overflow-y-auto`}>
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((option, index) => (
+            {coffee.origin && (
+              <div className="mb-4">
+                <div className="flex flex-wrap items-center gap-1">
+                  {coffee.origin.split(',').map(code => {
+                    const trimmedCode = code.trim();
+                    const country = countryFlags[trimmedCode];
+                    const isRegion = ['AS', 'LA', 'SA'].includes(trimmedCode);
+                    
+                    return (
+                      <span 
+                        key={code} 
+                        className="inline-flex items-center"
+                        title={country ? country.name : trimmedCode}
+                      >
+                        {country && !isRegion ? (
+                          <>
+                            <span className="text-xl">{country.flag}</span>
+                            <span className="text-xs ml-1">{trimmedCode}</span>
+                          </>
+                        ) : (
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            {country ? country.name : trimmedCode}
+                          </span>
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
+            {coffee.tasteNotes && (
+              <div className="mb-3">
+                <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Taste: </span>
+                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{coffee.tasteNotes}</span>
                 <button
-                  key={index}
-                  type="button"
-                  onClick={() => handleOptionSelect(option)}
-                  className={`w-full px-4 py-2 text-left hover:${
-                    darkMode ? 'bg-gray-600' : 'bg-gray-100'
-                  } transition-colors`}
+                  onClick={() => onShowRadar(coffee)}
+                  className="ml-2 text-amber-600 hover:text-amber-700 text-sm"
+                  title="Show flavor profile"
                 >
-                  <span className="truncate">{option}</span>
+                  <BarChart3 className="w-4 h-4 inline" />
                 </button>
-              ))
-            ) : (
-              <div className={`px-4 py-2 text-sm ${
-                darkMode ? 'text-gray-400' : 'text-gray-500'
-              }`}>
-                Type to add custom entry
+              </div>
+            )}
+            
+            {coffee.preparationNotes && (
+              <div className="mb-3">
+                <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Preparation: </span>
+                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} italic`}>{coffee.preparationNotes}</span>
+              </div>
+            )}
+            
+            <div className="flex items-center space-x-4 sm:space-x-6 mb-4 flex-wrap">
+              <div className="min-w-0">
+                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Crema</span>
+                <div className="overflow-hidden">
+                  <StarRating rating={coffee.cremaRating} readOnly />
+                </div>
+              </div>
+              <div className="min-w-0">
+                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Taste</span>
+                <div className="overflow-hidden">
+                  <StarRating rating={coffee.tasteRating} readOnly />
+                </div>
+              </div>
+              {(() => {
+                const cost = calculateCostPerCup(coffee);
+                const valueScore = calculateValueScore(coffee);
+                return cost && (
+                  <div>
+                    <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Cost/Cup</span>
+                    <span className="font-bold text-green-600" title={`Based on ${cost.gramsUsed}g coffee`}>
+                      {cost.costPerCup} EUR
+                    </span>
+                    {valueScore && (
+                      <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} block`}>
+                        Value: {valueScore}
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+            
+            {coffee.price && (
+              <div className="mb-4">
+                {(() => {
+                  const cost = calculateCostPerCup(coffee);
+                  return cost && (
+                    <div className="flex items-center space-x-4">
+                      <div className="text-sm">
+                        <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Cost per cup: </span>
+                        <span className="font-bold text-green-600">
+                          {cost.costPerCup} {cost.currency}
+                        </span>
+                      </div>
+                      <div className="text-sm">
+                        <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Price per kg: </span>
+                        <span className="font-bold">
+                          {cost.pricePerKg} {cost.currency}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+            
+            {(coffee.comment || coffee.url) && (
+              <div className="space-y-2">
+                {coffee.url && (
+                  <div className="flex items-center space-x-2">
+                    <ExternalLink className="w-4 h-4 text-blue-600" />
+                    <a 
+                      href={coffee.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline text-sm"
+                    >
+                      Product Link
+                    </a>
+                  </div>
+                )}
+                {coffee.comment && (
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} italic`}>
+                    "{coffee.comment}"
+                  </p>
+                )}
               </div>
             )}
           </div>
-        )}
+          
+          <div className="flex flex-col space-y-1 ml-4">
+            <button
+              onClick={onToggleFavorite}
+              className={`p-2 ${coffee.favorite ? 'text-yellow-400' : darkMode ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-400 hover:text-yellow-500'} transition-colors`}
+              title={coffee.favorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Star className={`w-5 h-5 ${coffee.favorite ? 'fill-current' : ''}`} />
+            </button>
+            <button
+              onClick={onEdit}
+              className={`p-2 ${darkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'} rounded transition-colors`}
+              title="Edit coffee"
+            >
+              <Edit3 className="w-5 h-5" />
+            </button>
+            <button
+              onClick={onDuplicate}
+              className={`p-2 ${darkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'} rounded transition-colors`}
+              title="Duplicate coffee"
+            >
+              <Copy className="w-5 h-5" />
+            </button>
+            <button
+              onClick={onDelete}
+              className={`p-2 ${darkMode ? 'text-gray-400 hover:text-red-400 hover:bg-gray-700' : 'text-gray-600 hover:text-red-600 hover:bg-red-50'} rounded transition-colors`}
+              title="Delete coffee"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
       </div>
     );
   };
@@ -1736,13 +1491,13 @@ const CoffeeTracker = () => {
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-amber-50 to-orange-100'} p-4 transition-colors`}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-6 mb-6 transition-colors`}>
+        <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-4 sm:p-6 mb-6 transition-colors`}>
           <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
             <div className="flex items-center space-x-3">
               <Coffee className="w-8 h-8 text-amber-600" />
               <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Coffee Tracker</h1>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center flex-wrap gap-2">
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-200 text-gray-700'} transition-colors`}
@@ -1808,9 +1563,9 @@ const CoffeeTracker = () => {
                   setShowAddForm(true);
                   scrollToForm();
                 }}
-                className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                className="bg-amber-600 hover:bg-amber-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 sm:w-5 h-4 sm:h-5" />
                 <span className="hidden sm:inline">Add Coffee</span>
               </button>
             </div>
@@ -1864,7 +1619,7 @@ const CoffeeTracker = () => {
 
         {/* Analytics Dashboard */}
         {showAnalytics && (
-          <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-6 mb-6 transition-colors`}>
+          <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-4 sm:p-6 mb-6 transition-colors`}>
             <h2 className="text-2xl font-bold mb-6">Coffee Analytics & Insights</h2>
             
             {/* Value Score Explanation */}
@@ -2024,7 +1779,7 @@ const CoffeeTracker = () => {
                     </p>
                   </div>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={analytics.priceAnalysis.slice(0, 10)} margin={{ top: 20, right: 30, left: 60, bottom: 80 }}>
+                    <BarChart data={analytics.priceAnalysis.slice(0, 10)} margin={{ top: 20, right: 30, left: 80, bottom: 80 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#374151' : '#e5e7eb'} />
                       <XAxis 
                         dataKey="name" 
@@ -2037,7 +1792,7 @@ const CoffeeTracker = () => {
                       />
                       <YAxis 
                         stroke={darkMode ? '#9ca3af' : '#6b7280'} 
-                        label={{ value: 'Cost per Cup (EUR)', angle: -90, position: 'insideLeft' }}
+                        label={{ value: 'Cost per Cup (EUR)', angle: -90, position: 'insideLeft', offset: 10 }}
                       />
                       <Tooltip 
                         content={({ active, payload, label }) => {
@@ -2146,7 +1901,7 @@ const CoffeeTracker = () => {
         )}
 
         {/* Search and Filter */}
-        <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-6 mb-6 transition-colors`}>
+        <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-4 sm:p-6 mb-6 transition-colors`}>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
@@ -2173,7 +1928,7 @@ const CoffeeTracker = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className={`px-4 py-2 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors`}
+                className={`px-3 sm:px-4 py-2 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors w-full sm:w-auto`}
               >
                 <option value="date">Sort by Date</option>
                 <option value="rating">Sort by Rating</option>
@@ -2188,7 +1943,7 @@ const CoffeeTracker = () => {
 
         {/* Add/Edit Form */}
         {showAddForm && (
-          <div ref={formRef} className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-6 mb-6 transition-colors`}>
+          <div ref={formRef} className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-4 sm:p-6 mb-6 transition-colors`}>
             <h2 className="text-2xl font-bold mb-6">
               {editingCoffee ? 'Edit Coffee' : 'Add New Coffee'}
             </h2>
@@ -2300,15 +2055,27 @@ const CoffeeTracker = () => {
                 </p>
               </div>
 
-              <div>
-                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Grinder Level</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 12, 15, 10"
-                  value={formData.grindingDegree}
-                  onChange={(e) => setFormData({...formData, grindingDegree: e.target.value})}
-                  className={`w-full px-3 py-2 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors`}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Grinder Level</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 12, 15, 40"
+                    value={formData.grindingDegree}
+                    onChange={(e) => setFormData({...formData, grindingDegree: e.target.value})}
+                    className={`w-full px-3 py-2 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Coffee Amount (g)</label>
+                  <input
+                    type="number"
+                    placeholder="18"
+                    value={formData.coffeeAmount}
+                    onChange={(e) => setFormData({...formData, coffeeAmount: e.target.value})}
+                    className={`w-full px-3 py-2 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors`}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -2350,7 +2117,7 @@ const CoffeeTracker = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
                 <div>
                   <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Crema Rating</label>
                   <StarRating 
@@ -2540,15 +2307,15 @@ const CoffeeTracker = () => {
 
         {/* Expand/Collapse All Controls */}
         {filteredCoffees.length > 0 && (
-          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl p-4 mb-6`}>
-            <div className="flex items-center justify-between">
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl p-3 sm:p-4 mb-6`}>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center space-x-2">
-                <Coffee className="w-5 h-5 text-amber-600" />
-                <span className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                  Coffee Collection ({filteredCoffees.length} coffees)
+                <Coffee className="w-4 sm:w-5 h-4 sm:h-5 text-amber-600" />
+                <span className={`text-sm sm:text-base font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                  Coffee Collection ({filteredCoffees.length} of {coffees.length} coffees)
                 </span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-shrink-0">
                 <button
                   onClick={expandAllRoasters}
                   className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -2581,7 +2348,23 @@ const CoffeeTracker = () => {
         {/* Coffee List */}
         <div className="space-y-8">
           {(() => {
-            // First group by roaster, then by coffeeGroup for variations
+            // For price and value sorting, show a flat list
+            if (sortBy === 'priceLowHigh' || sortBy === 'priceHighLow' || sortBy === 'value') {
+              return filteredCoffees.map((coffee) => (
+                <CoffeeCard 
+                  key={coffee.id} 
+                  coffee={coffee} 
+                  onEdit={() => handleEdit(coffee)}
+                  onDelete={() => handleDelete(coffee.id)}
+                  onToggleFavorite={() => handleToggleFavorite(coffee.id)}
+                  onDuplicate={() => handleDuplicate(coffee)}
+                  darkMode={darkMode}
+                  onShowRadar={setSelectedCoffeeForRadar}
+                />
+              ));
+            }
+            
+            // For other sorting, group by roaster
             const roasterGroups = filteredCoffees.reduce((roasters, coffee) => {
               const roaster = coffee.roaster.split(' - ')[0] || coffee.roaster; // Get main roaster name
               if (!roasters[roaster]) roasters[roaster] = [];
@@ -2589,17 +2372,25 @@ const CoffeeTracker = () => {
               return roasters;
             }, {});
             
-            // Sort roasters: favorites first, then alphabetically
+            // Sort roasters based on the selected sort option
             const sortedRoasters = Object.entries(roasterGroups).sort(([roasterA, coffeesA], [roasterB, coffeesB]) => {
-              const avgRatingA = coffeesA.reduce((sum, c) => sum + c.tasteRating, 0) / coffeesA.length;
-              const avgRatingB = coffeesB.reduce((sum, c) => sum + c.tasteRating, 0) / coffeesB.length;
-              const favCountA = coffeesA.filter(c => c.favorite).length;
-              const favCountB = coffeesB.filter(c => c.favorite).length;
-              
-              // Sort by: 1) favorites count, 2) average rating, 3) alphabetically
-              if (favCountA !== favCountB) return favCountB - favCountA;
-              if (Math.abs(avgRatingA - avgRatingB) > 0.1) return avgRatingB - avgRatingA;
-              return roasterA.localeCompare(roasterB);
+              if (sortBy === 'roaster') {
+                return roasterA.localeCompare(roasterB);
+              } else if (sortBy === 'rating') {
+                const avgRatingA = coffeesA.reduce((sum, c) => sum + c.tasteRating, 0) / coffeesA.length;
+                const avgRatingB = coffeesB.reduce((sum, c) => sum + c.tasteRating, 0) / coffeesB.length;
+                return avgRatingB - avgRatingA;
+              } else {
+                // Default: sort by favorites and rating
+                const avgRatingA = coffeesA.reduce((sum, c) => sum + c.tasteRating, 0) / coffeesA.length;
+                const avgRatingB = coffeesB.reduce((sum, c) => sum + c.tasteRating, 0) / coffeesB.length;
+                const favCountA = coffeesA.filter(c => c.favorite).length;
+                const favCountB = coffeesB.filter(c => c.favorite).length;
+                
+                if (favCountA !== favCountB) return favCountB - favCountA;
+                if (Math.abs(avgRatingA - avgRatingB) > 0.1) return avgRatingB - avgRatingA;
+                return roasterA.localeCompare(roasterB);
+              }
             });
             
             return sortedRoasters.map(([roasterName, roasterCoffees]) => {
@@ -2615,6 +2406,12 @@ const CoffeeTracker = () => {
               const favoriteCount = roasterCoffees.filter(c => c.favorite).length;
               const isCollapsed = collapsedRoasters[roasterName];
               
+              // Calculate average price per cup for this roaster
+              const coffeesWithPrice = roasterCoffees.filter(c => c.price && !isNaN(parseFloat(c.price)));
+              const avgPricePerCup = coffeesWithPrice.length > 0 
+                ? (coffeesWithPrice.reduce((sum, c) => sum + parseFloat(calculateCostPerCup(c).costPerCup), 0) / coffeesWithPrice.length).toFixed(3)
+                : null;
+              
               return (
                 <div key={roasterName} className="space-y-4">
                   {/* Roaster Header */}
@@ -2622,37 +2419,51 @@ const CoffeeTracker = () => {
                     className={`${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gradient-to-r from-amber-100 to-orange-100 hover:from-amber-200 hover:to-orange-200'} rounded-xl p-4 border-l-4 border-amber-500 cursor-pointer transition-colors`}
                     onClick={() => toggleRoasterCollapse(roasterName)}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="flex items-center flex-wrap gap-2">
                         <div className="flex items-center space-x-2">
                           {isCollapsed ? (
                             <ChevronDown className={`w-5 h-5 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
                           ) : (
                             <ChevronUp className={`w-5 h-5 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} />
                           )}
-                          <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                          <h2 className={`text-lg sm:text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} break-words`}>
                             ☕ {roasterName}
                           </h2>
                         </div>
-                        <span className={`text-sm px-3 py-1 rounded-full font-medium ${darkMode ? 'bg-gray-600 text-gray-200' : 'bg-white text-gray-700'}`}>
+                        <span className={`text-sm px-2 sm:px-3 py-1 rounded-full font-medium ${darkMode ? 'bg-gray-600 text-gray-200' : 'bg-white text-gray-700'}`}>
                           {roasterCoffees.length} coffee{roasterCoffees.length !== 1 ? 's' : ''}
                         </span>
                         {favoriteCount > 0 && (
-                          <span className={`text-sm px-3 py-1 rounded-full font-medium ${darkMode ? 'bg-yellow-900 text-yellow-100' : 'bg-yellow-100 text-yellow-800'}`}>
+                          <span className={`text-sm px-2 sm:px-3 py-1 rounded-full font-medium ${darkMode ? 'bg-yellow-900 text-yellow-100' : 'bg-yellow-100 text-yellow-800'}`}>
                             ⭐ {favoriteCount} favorite{favoriteCount !== 1 ? 's' : ''}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          Avg Rating:
-                        </span>
-                        <div className="flex items-center">
-                          <StarRating rating={Math.round(avgRating)} readOnly size="small" />
-                          <span className={`ml-1 text-sm font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                            {avgRating.toFixed(1)}
+                      <div className="flex items-center space-x-4 min-w-0">
+                        <div className="flex items-center space-x-2">
+                          <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'} hidden sm:inline`}>
+                            Avg:
                           </span>
+                          <div className="flex items-center flex-nowrap min-w-0">
+                            <div className="flex-shrink-0 overflow-hidden">
+                              <StarRating rating={Math.round(avgRating)} readOnly size="small" />
+                            </div>
+                            <span className={`ml-1 text-sm font-semibold ${darkMode ? 'text-gray-200' : 'text-gray-700'} whitespace-nowrap flex-shrink-0`}>
+                              {avgRating.toFixed(1)}
+                            </span>
+                          </div>
                         </div>
+                        {avgPricePerCup && (
+                          <div className="flex items-center space-x-1">
+                            <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                              €/cup:
+                            </span>
+                            <span className={`text-sm font-semibold ${darkMode ? 'text-green-400' : 'text-green-600'} whitespace-nowrap`}>
+                              {avgPricePerCup}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -2669,11 +2480,11 @@ const CoffeeTracker = () => {
                 return (
                   <div key={groupId} className="space-y-4">
                     {/* Main coffee card with shared information */}
-                    <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-6 border-l-4 border-blue-500`}>
+                    <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-4 md:p-6 border-l-4 border-blue-500`}>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-3">
-                            <h3 className="text-xl font-bold">{mainCoffee.roaster}</h3>
+                            <h3 className="text-lg sm:text-xl font-bold break-words">{mainCoffee.roaster}</h3>
                             <span className={`text-xs px-2 py-1 rounded-full font-medium ${darkMode ? 'bg-blue-900 text-blue-100' : 'bg-blue-100 text-blue-800'}`}>
                               📊 {coffees.length} preparations
                             </span>
@@ -2694,11 +2505,18 @@ const CoffeeTracker = () => {
                               </span>
                             </div>
                             
-                            {mainCoffee.grindingDegree && (
-                              <div className="flex items-center space-x-2">
-                                <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                                  Grinder Level: {mainCoffee.grindingDegree}
-                                </span>
+                            {(mainCoffee.grindingDegree || mainCoffee.coffeeAmount) && (
+                              <div className="flex items-center space-x-2 flex-wrap">
+                                {mainCoffee.grindingDegree && (
+                                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                                    Grinder Level: {mainCoffee.grindingDegree}
+                                  </span>
+                                )}
+                                {mainCoffee.coffeeAmount && (
+                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                    {mainCoffee.coffeeAmount}g coffee
+                                  </span>
+                                )}
                               </div>
                             )}
                             
@@ -2808,14 +2626,18 @@ const CoffeeTracker = () => {
                                 </div>
                               )}
                               
-                              <div className="grid grid-cols-2 gap-4 mb-3">
-                                <div>
+                              <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-3">
+                                <div className="min-w-0">
                                   <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} block mb-1`}>Crema</span>
-                                  <StarRating rating={coffee.cremaRating} readOnly />
+                                  <div className="overflow-hidden">
+                                    <StarRating rating={coffee.cremaRating} readOnly />
+                                  </div>
                                 </div>
-                                <div>
+                                <div className="min-w-0">
                                   <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} block mb-1`}>Taste</span>
-                                  <StarRating rating={coffee.tasteRating} readOnly />
+                                  <div className="overflow-hidden">
+                                    <StarRating rating={coffee.tasteRating} readOnly />
+                                  </div>
                                 </div>
                               </div>
                               
@@ -2868,11 +2690,11 @@ const CoffeeTracker = () => {
                 // Individual coffee display (unchanged)
                 const coffee = mainCoffee;
                 return (
-            <div key={coffee.id} className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all`}>
+            <div key={coffee.id} className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-2xl shadow-xl p-4 md:p-6 hover:shadow-2xl transition-all`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-3">
-                    <h3 className="text-xl font-bold">{coffee.roaster}</h3>
+                    <h3 className="text-lg sm:text-xl font-bold break-words">{coffee.roaster}</h3>
                     {coffee.favorite && (
                       <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                     )}
@@ -2903,11 +2725,18 @@ const CoffeeTracker = () => {
                       </span>
                     </div>
                     
-                    {coffee.grindingDegree && (
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                          Grinder Level: {coffee.grindingDegree}
-                        </span>
+                    {(coffee.grindingDegree || coffee.coffeeAmount) && (
+                      <div className="flex items-center space-x-2 flex-wrap">
+                        {coffee.grindingDegree && (
+                          <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                            Grinder Level: {coffee.grindingDegree}
+                          </span>
+                        )}
+                        {coffee.coffeeAmount && (
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {coffee.coffeeAmount}g coffee
+                          </span>
+                        )}
                       </div>
                     )}
                     
@@ -2979,14 +2808,18 @@ const CoffeeTracker = () => {
                     </div>
                   )}
                   
-                  <div className="flex items-center space-x-6 mb-4">
-                    <div>
+                  <div className="flex items-center space-x-4 sm:space-x-6 mb-4 flex-wrap">
+                    <div className="min-w-0">
                       <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Crema</span>
-                      <StarRating rating={coffee.cremaRating} readOnly />
+                      <div className="overflow-hidden">
+                        <StarRating rating={coffee.cremaRating} readOnly />
+                      </div>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Taste</span>
-                      <StarRating rating={coffee.tasteRating} readOnly />
+                      <div className="overflow-hidden">
+                        <StarRating rating={coffee.tasteRating} readOnly />
+                      </div>
                     </div>
                     {(() => {
                       const cost = calculateCostPerCup(coffee);
@@ -3068,8 +2901,8 @@ const CoffeeTracker = () => {
         </div>
 
         {filteredCoffees.length === 0 && (
-          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl p-12 text-center`}>
-            <Coffee className={`w-16 h-16 ${darkMode ? 'text-gray-600' : 'text-gray-300'} mx-auto mb-4`} />
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl p-8 sm:p-12 text-center`}>
+            <Coffee className={`w-12 sm:w-16 h-12 sm:h-16 ${darkMode ? 'text-gray-600' : 'text-gray-300'} mx-auto mb-4`} />
             <h3 className={`text-xl font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-2`}>No coffees found</h3>
             <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
               {searchTerm || filterFavorites ? 'Try adjusting your search or filters' : 'Add your first coffee to get started!'}
