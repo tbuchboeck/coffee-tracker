@@ -279,7 +279,14 @@ const CoffeeTracker = () => {
     // Use actual coffee amount if specified, otherwise use method defaults
     let gramsPerCup;
     if (coffee.coffeeAmount && !isNaN(parseFloat(coffee.coffeeAmount))) {
-      gramsPerCup = parseFloat(coffee.coffeeAmount);
+      const totalCoffeeAmount = parseFloat(coffee.coffeeAmount);
+      
+      // For cold brew, if servings specified, calculate per serving
+      if (coffee.brewingMethod === 'coldbrew' && coffee.servings && !isNaN(parseFloat(coffee.servings))) {
+        gramsPerCup = totalCoffeeAmount / parseFloat(coffee.servings);
+      } else {
+        gramsPerCup = totalCoffeeAmount;
+      }
     } else {
       // Different brewing methods use different amounts of coffee (defaults)
       switch(coffee.brewingMethod) {
@@ -309,7 +316,9 @@ const CoffeeTracker = () => {
       costPerCup: costPerCup.toFixed(3),
       pricePerKg: (parseFloat(coffee.price) / coffee.packageSize * 1000).toFixed(2),
       currency: coffee.currency || 'EUR',
-      gramsUsed: gramsPerCup
+      gramsUsed: gramsPerCup.toFixed(1),
+      batchInfo: coffee.brewingMethod === 'coldbrew' && coffee.servings ? 
+        `${coffee.coffeeAmount}g ÷ ${coffee.servings} servings` : null
     };
   };
 
@@ -455,6 +464,7 @@ const CoffeeTracker = () => {
     grindingTime: '',
     grindingDegree: '',
     coffeeAmount: '', // Amount of coffee used in grams
+    servings: '', // Number of servings/cups this preparation yields
     percentArabica: 100,
     percentRobusta: 0,
     cremaRating: 0,
@@ -482,6 +492,7 @@ const CoffeeTracker = () => {
       grindingTime: '',
       grindingDegree: '',
       coffeeAmount: '',
+      servings: '',
       percentArabica: 100,
       percentRobusta: 0,
       cremaRating: 0,
@@ -511,6 +522,7 @@ const CoffeeTracker = () => {
       grindingTime: formData.grindingTime || '',
       grindingDegree: formData.grindingDegree || '',
       coffeeAmount: formData.coffeeAmount || '',
+      servings: formData.servings || '',
       cremaRating: parseInt(formData.cremaRating),
       tasteRating: parseInt(formData.tasteRating),
       tasteNotes: formData.tasteNotes || '',
@@ -539,6 +551,7 @@ const CoffeeTracker = () => {
       grindingTime: coffee.grindingTime || '',
       grindingDegree: coffee.grindingDegree || '',
       coffeeAmount: coffee.coffeeAmount || '',
+      servings: coffee.servings || '',
       percentArabica: coffee.percentArabica,
       percentRobusta: coffee.percentRobusta,
       cremaRating: coffee.cremaRating,
@@ -1180,7 +1193,7 @@ const CoffeeTracker = () => {
                   )}
                   {coffee.coffeeAmount && (
                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                      {coffee.coffeeAmount}g coffee
+                      {coffee.coffeeAmount}g coffee{coffee.servings && coffee.brewingMethod === 'coldbrew' ? ` (${coffee.servings} servings)` : ''}
                     </span>
                   )}
                 </div>
@@ -1273,7 +1286,7 @@ const CoffeeTracker = () => {
                 return cost && (
                   <div>
                     <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Cost/Cup</span>
-                    <span className="font-bold text-green-600" title={`Based on ${cost.gramsUsed}g coffee`}>
+                    <span className="font-bold text-green-600" title={cost.batchInfo || `Based on ${cost.gramsUsed}g coffee`}>
                       {cost.costPerCup} EUR
                     </span>
                     {valueScore && (
@@ -2055,7 +2068,7 @@ const CoffeeTracker = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className={`grid ${formData.brewingMethod === 'coldbrew' ? 'grid-cols-3' : 'grid-cols-2'} gap-4`}>
                 <div>
                   <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Grinder Level</label>
                   <input
@@ -2070,12 +2083,27 @@ const CoffeeTracker = () => {
                   <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Coffee Amount (g)</label>
                   <input
                     type="number"
-                    placeholder="18"
+                    placeholder={formData.brewingMethod === 'coldbrew' ? "90" : "18"}
                     value={formData.coffeeAmount}
                     onChange={(e) => setFormData({...formData, coffeeAmount: e.target.value})}
                     className={`w-full px-3 py-2 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors`}
                   />
                 </div>
+                {formData.brewingMethod === 'coldbrew' && (
+                  <div>
+                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>Servings/Cups</label>
+                    <input
+                      type="number"
+                      placeholder="10"
+                      value={formData.servings}
+                      onChange={(e) => setFormData({...formData, servings: e.target.value})}
+                      className={`w-full px-3 py-2 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors`}
+                    />
+                    <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      How many cups from this batch?
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -2514,7 +2542,7 @@ const CoffeeTracker = () => {
                                 )}
                                 {mainCoffee.coffeeAmount && (
                                   <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                    {mainCoffee.coffeeAmount}g coffee
+                                    {mainCoffee.coffeeAmount}g coffee{mainCoffee.servings && mainCoffee.brewingMethod === 'coldbrew' ? ` (${mainCoffee.servings} servings)` : ''}
                                   </span>
                                 )}
                               </div>
@@ -2734,7 +2762,7 @@ const CoffeeTracker = () => {
                         )}
                         {coffee.coffeeAmount && (
                           <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {coffee.coffeeAmount}g coffee
+                            {coffee.coffeeAmount}g coffee{coffee.servings && coffee.brewingMethod === 'coldbrew' ? ` (${coffee.servings} servings)` : ''}
                           </span>
                         )}
                       </div>
