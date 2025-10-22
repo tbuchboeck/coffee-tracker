@@ -10,6 +10,73 @@ const CURRENT_VERSION = 'v2.1';
 const TABLE_NAME = 'coffees';
 
 /**
+ * Mapping of lowercase PostgreSQL column names to camelCase JavaScript property names
+ * PostgreSQL stores all column names in lowercase, so we need this mapping
+ */
+const COLUMN_MAPPING = {
+  'id': 'id',
+  'cuppingtime': 'cuppingTime',
+  'roaster': 'roaster',
+  'description': 'description',
+  'origin': 'origin',
+  'url': 'url',
+  'percentarabica': 'percentArabica',
+  'percentrobusta': 'percentRobusta',
+  'roastlevel': 'roastLevel',
+  'brewingmethod': 'brewingMethod',
+  'recommendedmethod': 'recommendedMethod',
+  'grinded': 'grinded',
+  'grindingtime': 'grindingTime',
+  'grindingdegree': 'grindingDegree',
+  'preparationnotes': 'preparationNotes',
+  'coffeeamount': 'coffeeAmount',
+  'servings': 'servings',
+  'cremarating': 'cremaRating',
+  'tasterating': 'tasteRating',
+  'tastenotes': 'tasteNotes',
+  'comment': 'comment',
+  'favorite': 'favorite',
+  'price': 'price',
+  'packagesize': 'packageSize',
+  'currency': 'currency',
+  'coffeegroup': 'coffeeGroup',
+  'created_at': 'created_at'
+};
+
+/**
+ * Convert camelCase keys to lowercase for PostgreSQL
+ */
+const toLowerCaseKeys = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (obj instanceof Date) return obj;
+
+  const newObj = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      newObj[key.toLowerCase()] = obj[key];
+    }
+  }
+  return newObj;
+};
+
+/**
+ * Convert lowercase PostgreSQL keys back to camelCase for JavaScript
+ */
+const toCamelCaseKeys = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (obj instanceof Date) return obj;
+
+  const newObj = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const camelKey = COLUMN_MAPPING[key] || key;
+      newObj[camelKey] = obj[key];
+    }
+  }
+  return newObj;
+};
+
+/**
  * Coffee Database Service
  *
  * This service provides a unified interface for storing coffee data.
@@ -36,10 +103,13 @@ class CoffeeService {
         const { data, error } = await supabase
           .from(TABLE_NAME)
           .select('*')
-          .order('cuppingTime', { ascending: false });
+          .order('cuppingtime', { ascending: false }); // lowercase for PostgreSQL
 
         if (error) throw error;
-        return data || [];
+
+        // Convert lowercase keys back to camelCase for JavaScript
+        const coffeesWithCamelCase = (data || []).map(coffee => toCamelCaseKeys(coffee));
+        return coffeesWithCamelCase;
       } catch (error) {
         console.error('Error fetching coffees from Supabase:', error);
         // Fallback to localStorage on error
@@ -56,9 +126,12 @@ class CoffeeService {
   async addCoffee(coffee) {
     if (this.useCloud) {
       try {
+        // Convert camelCase to lowercase for PostgreSQL
+        const coffeeForDb = toLowerCaseKeys(coffee);
+
         const { data, error } = await supabase
           .from(TABLE_NAME)
-          .insert([coffee])
+          .insert([coffeeForDb])
           .select()
           .single();
 
@@ -79,9 +152,12 @@ class CoffeeService {
   async updateCoffee(id, updates) {
     if (this.useCloud) {
       try {
+        // Convert camelCase to lowercase for PostgreSQL
+        const updatesForDb = toLowerCaseKeys(updates);
+
         const { data, error } = await supabase
           .from(TABLE_NAME)
-          .update(updates)
+          .update(updatesForDb)
           .eq('id', id)
           .select()
           .single();
@@ -135,9 +211,12 @@ class CoffeeService {
 
         // Insert all new entries
         if (coffees.length > 0) {
+          // Convert camelCase to lowercase for PostgreSQL
+          const coffeesForDb = coffees.map(coffee => toLowerCaseKeys(coffee));
+
           const { error: insertError } = await supabase
             .from(TABLE_NAME)
-            .insert(coffees);
+            .insert(coffeesForDb);
 
           if (insertError) throw insertError;
         }
@@ -168,10 +247,13 @@ class CoffeeService {
         return { success: true, message: 'No data to migrate' };
       }
 
+      // Convert camelCase to lowercase for PostgreSQL
+      const dataForDb = localData.map(coffee => toLowerCaseKeys(coffee));
+
       // Use upsert to handle existing entries (insert or update)
       const { error } = await supabase
         .from(TABLE_NAME)
-        .upsert(localData, {
+        .upsert(dataForDb, {
           onConflict: 'id',
           ignoreDuplicates: false
         });
