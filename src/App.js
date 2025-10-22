@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Coffee, Star, Search, Trash2, Edit3, Calendar, Percent, ExternalLink, BarChart3, Moon, Sun, Download, Upload, FileText, RefreshCw, RotateCcw, Copy, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { Plus, Coffee, Star, Search, Trash2, Edit3, Calendar, Percent, ExternalLink, BarChart3, Moon, Sun, Download, Upload, FileText, RefreshCw, RotateCcw, Copy, ChevronDown, ChevronUp, Check, Cloud, CloudOff, Database } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
 import { personalCoffees } from './personal_coffees';
+import { coffeeService } from './services/coffeeService';
 
 // Personal coffee collection - your complete 25 coffee database
 const defaultCoffees = personalCoffees;
@@ -22,6 +23,14 @@ const CoffeeTracker = () => {
     return saved ? JSON.parse(saved) : {};
   });
   const [tasteProfileCollapsed, setTasteProfileCollapsed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [cloudStatus, setCloudStatus] = useState({
+    enabled: coffeeService.isCloudEnabled(),
+    syncing: false,
+    error: null
+  });
+  const [showMigrationModal, setShowMigrationModal] = useState(false);
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
 
@@ -82,58 +91,62 @@ const CoffeeTracker = () => {
 
   // Data version for migration management
   const DATA_VERSION = '2.1';
-  
-  // Load data from localStorage on mount
+
+  // Load data from database on mount
   useEffect(() => {
-    const loadedData = localStorage.getItem('coffeeTrackerData');
-    const loadedVersion = localStorage.getItem('coffeeTrackerVersion');
-    
-    if (loadedData && loadedVersion === DATA_VERSION) {
+    const loadData = async () => {
+      setIsLoading(true);
       try {
-        const parsedData = JSON.parse(loadedData);
-        // Convert date strings back to Date objects
-        const coffeesWithDates = parsedData.map(coffee => ({
-          ...coffee,
-          cuppingTime: new Date(coffee.cuppingTime)
+        const data = await coffeeService.getAllCoffees();
+
+        if (data.length === 0) {
+          // No data in database, use defaults
+          console.log('🔄 No data found, using default data');
+          setCoffees(defaultCoffees);
+          // Save defaults to database
+          if (coffeeService.isCloudEnabled()) {
+            await coffeeService.saveAllCoffees(defaultCoffees);
+          }
+        } else {
+          // Convert date strings back to Date objects
+          const coffeesWithDates = data.map(coffee => ({
+            ...coffee,
+            cuppingTime: new Date(coffee.cuppingTime)
+          }));
+          setCoffees(coffeesWithDates);
+          console.log(`✅ Loaded ${data.length} coffee entries from database`);
+        }
+
+        // Update cloud status
+        setCloudStatus(prev => ({
+          ...prev,
+          enabled: coffeeService.isCloudEnabled(),
+          error: null
         }));
-        setCoffees(coffeesWithDates);
-        console.log('✅ Loaded existing data from localStorage');
       } catch (error) {
-        console.error('❌ Error loading data from localStorage:', error);
-        // Fall back to default data if there's an error
+        console.error('❌ Error loading data:', error);
+        setCloudStatus(prev => ({
+          ...prev,
+          error: 'Failed to load data'
+        }));
+        // Fall back to default data on error
         setCoffees(defaultCoffees);
-        localStorage.setItem('coffeeTrackerVersion', DATA_VERSION);
+      } finally {
+        setIsLoading(false);
       }
-    } else {
-      // No saved data or version mismatch - use updated default data
-      console.log('🔄 Using fresh default data (version mismatch or first run)');
-      setCoffees(defaultCoffees);
-      localStorage.setItem('coffeeTrackerVersion', DATA_VERSION);
-    }
+    };
 
     // Load dark mode preference
     const savedDarkMode = localStorage.getItem('coffeeTrackerDarkMode');
     if (savedDarkMode !== null) {
       setDarkMode(JSON.parse(savedDarkMode));
     }
+
+    loadData();
   }, []);
 
-  // Save data to localStorage whenever coffees change
-  useEffect(() => {
-    if (coffees.length > 0) {
-      try {
-        localStorage.setItem('coffeeTrackerData', JSON.stringify(coffees));
-        localStorage.setItem('coffeeTrackerVersion', DATA_VERSION);
-        localStorage.setItem('coffeeTrackerLastSaved', new Date().toISOString());
-        console.log('💾 Data saved to localStorage');
-      } catch (error) {
-        console.error('❌ Error saving to localStorage:', error);
-        if (error.name === 'QuotaExceededError') {
-          alert('Storage quota exceeded! Consider exporting your data.');
-        }
-      }
-    }
-  }, [coffees]);
+  // Note: Data is now saved immediately on each operation via coffeeService
+  // No need for auto-save useEffect anymore
 
   // Save dark mode preference
   useEffect(() => {
@@ -512,34 +525,56 @@ const CoffeeTracker = () => {
     });
   };
 
-  const handleSubmit = () => {
-    const newCoffee = {
-      ...formData,
-      id: editingCoffee ? editingCoffee.id : Date.now(),
-      cuppingTime: editingCoffee ? editingCoffee.cuppingTime : new Date(),
-      percentArabica: parseInt(formData.percentArabica),
-      percentRobusta: parseInt(formData.percentRobusta),
-      grindingTime: formData.grindingTime || '',
-      grindingDegree: formData.grindingDegree || '',
-      coffeeAmount: formData.coffeeAmount || '',
-      servings: formData.servings || '',
-      cremaRating: parseInt(formData.cremaRating),
-      tasteRating: parseInt(formData.tasteRating),
-      tasteNotes: formData.tasteNotes || '',
-      url: formData.url || ''
-    };
+  const handleSubmit = async () => {
+    setIsSaving(true);
+    try {
+      const newCoffee = {
+        ...formData,
+        id: editingCoffee ? editingCoffee.id : Date.now(),
+        cuppingTime: editingCoffee ? editingCoffee.cuppingTime : new Date(),
+        percentArabica: parseInt(formData.percentArabica),
+        percentRobusta: parseInt(formData.percentRobusta),
+        grindingTime: formData.grindingTime || '',
+        grindingDegree: formData.grindingDegree || '',
+        coffeeAmount: formData.coffeeAmount || '',
+        servings: formData.servings || '',
+        cremaRating: parseInt(formData.cremaRating),
+        tasteRating: parseInt(formData.tasteRating),
+        tasteNotes: formData.tasteNotes || '',
+        url: formData.url || ''
+      };
 
-    if (editingCoffee) {
-      setCoffees(coffees.map(coffee => 
-        coffee.id === editingCoffee.id ? newCoffee : coffee
-      ));
-      setEditingCoffee(null);
-    } else {
-      setCoffees([...coffees, newCoffee]);
+      if (editingCoffee) {
+        // Update existing coffee
+        const result = await coffeeService.updateCoffee(editingCoffee.id, newCoffee);
+        if (result.success) {
+          setCoffees(coffees.map(coffee =>
+            coffee.id === editingCoffee.id ? newCoffee : coffee
+          ));
+        } else {
+          alert('Failed to update coffee. Please try again.');
+          return;
+        }
+        setEditingCoffee(null);
+      } else {
+        // Add new coffee
+        const result = await coffeeService.addCoffee(newCoffee);
+        if (result.success) {
+          setCoffees([...coffees, newCoffee]);
+        } else {
+          alert('Failed to add coffee. Please try again.');
+          return;
+        }
+      }
+
+      resetForm();
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Error saving coffee:', error);
+      alert('An error occurred while saving. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
-
-    resetForm();
-    setShowAddForm(false);
   };
 
   const handleEdit = (coffee) => {
@@ -574,70 +609,106 @@ const CoffeeTracker = () => {
     scrollToForm();
   };
 
-  const handleDelete = (id) => {
-    setCoffees(coffees.filter(coffee => coffee.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      const result = await coffeeService.deleteCoffee(id);
+      if (result.success) {
+        setCoffees(coffees.filter(coffee => coffee.id !== id));
+      } else {
+        alert('Failed to delete coffee. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting coffee:', error);
+      alert('An error occurred while deleting. Please try again.');
+    }
   };
 
   // Copy coffee for different preparation methods
-  const handleCopy = (coffee) => {
-    const newCoffee = {
-      ...coffee,
-      id: Date.now(),
-      cuppingTime: new Date(),
-      cremaRating: 0,
-      tasteRating: 0,
-      preparationNotes: '',
-      comment: '',
-      // Create or maintain group ID for related coffees
-      coffeeGroup: coffee.coffeeGroup || `${coffee.roaster}-${coffee.description}`.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()
-    };
-    
-    // Also update the original coffee with group ID if it doesn't have one
-    if (!coffee.coffeeGroup) {
-      const updatedCoffees = coffees.map(c => 
-        c.id === coffee.id 
-          ? { ...c, coffeeGroup: newCoffee.coffeeGroup }
-          : c
-      );
-      setCoffees([...updatedCoffees, newCoffee]);
-    } else {
-      setCoffees([...coffees, newCoffee]);
+  const handleCopy = async (coffee) => {
+    try {
+      const newCoffee = {
+        ...coffee,
+        id: Date.now(),
+        cuppingTime: new Date(),
+        cremaRating: 0,
+        tasteRating: 0,
+        preparationNotes: '',
+        comment: '',
+        // Create or maintain group ID for related coffees
+        coffeeGroup: coffee.coffeeGroup || `${coffee.roaster}-${coffee.description}`.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()
+      };
+
+      // Add the new coffee to the database
+      const result = await coffeeService.addCoffee(newCoffee);
+      if (!result.success) {
+        alert('Failed to copy coffee. Please try again.');
+        return;
+      }
+
+      // Also update the original coffee with group ID if it doesn't have one
+      if (!coffee.coffeeGroup) {
+        const updatedOriginal = { ...coffee, coffeeGroup: newCoffee.coffeeGroup };
+        await coffeeService.updateCoffee(coffee.id, updatedOriginal);
+        const updatedCoffees = coffees.map(c =>
+          c.id === coffee.id ? updatedOriginal : c
+        );
+        setCoffees([...updatedCoffees, newCoffee]);
+      } else {
+        setCoffees([...coffees, newCoffee]);
+      }
+
+      // Pre-fill form with the new coffee for editing
+      setFormData({
+        roaster: newCoffee.roaster,
+        description: newCoffee.description,
+        favorite: newCoffee.favorite,
+        grinded: newCoffee.grinded,
+        grindingTime: newCoffee.grindingTime || '',
+        grindingDegree: newCoffee.grindingDegree || '',
+        percentArabica: newCoffee.percentArabica,
+        percentRobusta: newCoffee.percentRobusta,
+        cremaRating: newCoffee.cremaRating,
+        tasteRating: newCoffee.tasteRating,
+        tasteNotes: newCoffee.tasteNotes || '',
+        url: newCoffee.url || '',
+        comment: newCoffee.comment || '',
+        origin: newCoffee.origin || '',
+        roastLevel: newCoffee.roastLevel || 'medium',
+        brewingMethod: newCoffee.brewingMethod || 'espresso',
+        recommendedMethod: newCoffee.recommendedMethod || 'espresso',
+        price: newCoffee.price || '',
+        packageSize: newCoffee.packageSize || 1000,
+        currency: newCoffee.currency || 'EUR',
+        preparationNotes: newCoffee.preparationNotes || '',
+        coffeeGroup: newCoffee.coffeeGroup
+      });
+      setEditingCoffee(newCoffee);
+      setShowAddForm(true);
+      scrollToForm();
+    } catch (error) {
+      console.error('Error copying coffee:', error);
+      alert('An error occurred while copying. Please try again.');
     }
-    
-    // Pre-fill form with the new coffee for editing
-    setFormData({
-      roaster: newCoffee.roaster,
-      description: newCoffee.description,
-      favorite: newCoffee.favorite,
-      grinded: newCoffee.grinded,
-      grindingTime: newCoffee.grindingTime || '',
-      grindingDegree: newCoffee.grindingDegree || '',
-      percentArabica: newCoffee.percentArabica,
-      percentRobusta: newCoffee.percentRobusta,
-      cremaRating: newCoffee.cremaRating,
-      tasteRating: newCoffee.tasteRating,
-      tasteNotes: newCoffee.tasteNotes || '',
-      url: newCoffee.url || '',
-      comment: newCoffee.comment || '',
-      origin: newCoffee.origin || '',
-      roastLevel: newCoffee.roastLevel || 'medium',
-      brewingMethod: newCoffee.brewingMethod || 'espresso',
-      recommendedMethod: newCoffee.recommendedMethod || 'espresso',
-      price: newCoffee.price || '',
-      packageSize: newCoffee.packageSize || 1000,
-      currency: newCoffee.currency || 'EUR',
-      preparationNotes: newCoffee.preparationNotes || '',
-      coffeeGroup: newCoffee.coffeeGroup
-    });
-    setEditingCoffee(newCoffee);
-    setShowAddForm(true);
-    scrollToForm();
   };
 
-  const handleToggleFavorite = (id) => {
-    setCoffees(coffees.map(coffee => 
-      coffee.id === id ? { ...coffee, favorite: !coffee.favorite } : coffee
-    ));
+  const handleToggleFavorite = async (id) => {
+    const coffee = coffees.find(c => c.id === id);
+    if (!coffee) return;
+
+    try {
+      const updatedCoffee = { ...coffee, favorite: !coffee.favorite };
+      const result = await coffeeService.updateCoffee(id, updatedCoffee);
+      if (result.success) {
+        setCoffees(coffees.map(c =>
+          c.id === id ? updatedCoffee : c
+        ));
+      } else {
+        alert('Failed to update favorite status. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      alert('An error occurred. Please try again.');
+    }
   };
 
   const handleDuplicate = (coffee) => {
@@ -860,12 +931,33 @@ const CoffeeTracker = () => {
     if (userInput === confirmText) {
       // Double confirmation
       if (window.confirm('⚠️ FINAL WARNING: Are you absolutely sure? This will delete everything!')) {
-        localStorage.removeItem('coffeeTrackerData');
-        localStorage.removeItem('coffeeTrackerVersion');
-        localStorage.removeItem('coffeeTrackerLastSaved');
-        setCoffees(defaultCoffees);
-        localStorage.setItem('coffeeTrackerVersion', DATA_VERSION);
-        alert('✅ Data reset to defaults. All previous data has been deleted.');
+        const resetData = async () => {
+          setIsSaving(true);
+          try {
+            // Clear cloud data if enabled
+            if (coffeeService.isCloudEnabled()) {
+              await coffeeService.clearCloudData();
+            }
+
+            // Clear localStorage
+            localStorage.removeItem('coffeeTrackerData');
+            localStorage.removeItem('coffeeTrackerVersion');
+            localStorage.removeItem('coffeeTrackerLastSaved');
+
+            // Save defaults to database
+            await coffeeService.saveAllCoffees(defaultCoffees);
+            setCoffees(defaultCoffees);
+            localStorage.setItem('coffeeTrackerVersion', DATA_VERSION);
+
+            alert('✅ Data reset to defaults. All previous data has been deleted.');
+          } catch (error) {
+            console.error('Error resetting data:', error);
+            alert('Error resetting data. Please try again.');
+          } finally {
+            setIsSaving(false);
+          }
+        };
+        resetData();
       }
     } else if (userInput !== null) {
       alert('❌ Reset cancelled. Text did not match exactly.');
@@ -873,22 +965,59 @@ const CoffeeTracker = () => {
   };
 
   // Force refresh data (bypass version check)
-  const handleForceRefresh = () => {
+  const handleForceRefresh = async () => {
     if (window.confirm('This will update your data with any missing fields from the latest version. Existing data will be preserved. Continue?')) {
-      const migratedData = coffees.map(coffee => ({
-        ...coffee,
-        // Ensure all new fields exist
-        brewingMethod: coffee.brewingMethod || 'espresso',
-        recommendedMethod: coffee.recommendedMethod || 'espresso',
-        price: coffee.price || '',
-        packageSize: coffee.packageSize || 1000,
-        currency: coffee.currency || 'EUR',
-        preparationNotes: coffee.preparationNotes || (new Date(coffee.cuppingTime) < new Date('2024-12-01') ? 'Pure espresso' : ''),
-        coffeeGroup: coffee.coffeeGroup || ''
-      }));
-      setCoffees(migratedData);
-      localStorage.setItem('coffeeTrackerVersion', DATA_VERSION);
-      alert('✅ Data migrated to latest version!');
+      setIsSaving(true);
+      try {
+        const migratedData = coffees.map(coffee => ({
+          ...coffee,
+          // Ensure all new fields exist
+          brewingMethod: coffee.brewingMethod || 'espresso',
+          recommendedMethod: coffee.recommendedMethod || 'espresso',
+          price: coffee.price || '',
+          packageSize: coffee.packageSize || 1000,
+          currency: coffee.currency || 'EUR',
+          preparationNotes: coffee.preparationNotes || (new Date(coffee.cuppingTime) < new Date('2024-12-01') ? 'Pure espresso' : ''),
+          coffeeGroup: coffee.coffeeGroup || ''
+        }));
+
+        // Save to database
+        await coffeeService.saveAllCoffees(migratedData);
+        setCoffees(migratedData);
+        localStorage.setItem('coffeeTrackerVersion', DATA_VERSION);
+        alert('✅ Data migrated to latest version!');
+      } catch (error) {
+        console.error('Error refreshing data:', error);
+        alert('Error refreshing data. Please try again.');
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  // Migrate localStorage data to cloud
+  const handleMigrateToCloud = async () => {
+    if (!coffeeService.isCloudEnabled()) {
+      alert('Cloud storage is not configured. Please set up Supabase first.');
+      return;
+    }
+
+    setCloudStatus(prev => ({ ...prev, syncing: true, error: null }));
+    try {
+      const result = await coffeeService.migrateToCloud();
+      if (result.success) {
+        alert(result.message || 'Successfully migrated data to cloud!');
+        setShowMigrationModal(false);
+      } else {
+        alert('Migration failed: ' + (result.error?.message || 'Unknown error'));
+        setCloudStatus(prev => ({ ...prev, error: 'Migration failed' }));
+      }
+    } catch (error) {
+      console.error('Migration error:', error);
+      alert('Error during migration: ' + error.message);
+      setCloudStatus(prev => ({ ...prev, error: 'Migration failed' }));
+    } finally {
+      setCloudStatus(prev => ({ ...prev, syncing: false }));
     }
   };
 
@@ -917,10 +1046,10 @@ const CoffeeTracker = () => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const importedData = JSON.parse(e.target.result);
-        
+
         // Validate the imported data
         if (!importedData.coffees || !Array.isArray(importedData.coffees)) {
           alert('Invalid file format. Please select a valid Coffee Tracker export file.');
@@ -942,28 +1071,49 @@ const CoffeeTracker = () => {
           'Cancel = Merge with existing data'
         );
 
+        setIsSaving(true);
+
         if (shouldReplace) {
-          setCoffees(importedCoffees);
+          // Replace all data
+          const result = await coffeeService.saveAllCoffees(importedCoffees);
+          if (result.success) {
+            setCoffees(importedCoffees);
+            alert(`Successfully imported ${importedCoffees.length} coffees!`);
+          } else {
+            alert('Failed to import data. Please try again.');
+          }
         } else {
           // Merge: add imported coffees with new IDs to avoid conflicts
           const maxId = Math.max(...coffees.map(c => c.id), 0);
-          const mergedCoffees = [
-            ...coffees,
-            ...importedCoffees.map((coffee, index) => ({
-              ...coffee,
-              id: maxId + index + 1
-            }))
-          ];
-          setCoffees(mergedCoffees);
+          const coffeesToAdd = importedCoffees.map((coffee, index) => ({
+            ...coffee,
+            id: maxId + index + 1
+          }));
+
+          // Add each coffee individually
+          let successCount = 0;
+          for (const coffee of coffeesToAdd) {
+            const result = await coffeeService.addCoffee(coffee);
+            if (result.success) successCount++;
+          }
+
+          if (successCount > 0) {
+            const mergedCoffees = [...coffees, ...coffeesToAdd];
+            setCoffees(mergedCoffees);
+            alert(`Successfully merged ${successCount} coffees!`);
+          } else {
+            alert('Failed to merge data. Please try again.');
+          }
         }
 
-        alert(`Successfully imported ${importedCoffees.length} coffees!`);
+        setIsSaving(false);
       } catch (error) {
         console.error('Import error:', error);
         alert('Error importing file. Please make sure it\'s a valid Coffee Tracker export.');
+        setIsSaving(false);
       }
     };
-    
+
     reader.readAsText(file);
     // Reset file input
     event.target.value = '';
@@ -1511,6 +1661,24 @@ const CoffeeTracker = () => {
               <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Coffee Tracker</h1>
             </div>
             <div className="flex items-center flex-wrap gap-2">
+              {/* Cloud Status Indicator */}
+              {cloudStatus.enabled ? (
+                <button
+                  onClick={() => setShowMigrationModal(true)}
+                  className={`p-2 rounded-lg ${darkMode ? 'bg-green-900 text-green-300 hover:bg-green-800' : 'bg-green-100 text-green-700 hover:bg-green-200'} transition-colors`}
+                  title="Cloud storage enabled - Click to manage"
+                >
+                  <Cloud className="w-5 h-5" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowMigrationModal(true)}
+                  className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-400 hover:bg-gray-600' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'} transition-colors`}
+                  title="Cloud storage not configured - Click to learn more"
+                >
+                  <CloudOff className="w-5 h-5" />
+                </button>
+              )}
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-200 text-gray-700'} transition-colors`}
@@ -2943,6 +3111,137 @@ const CoffeeTracker = () => {
           </div>
         )}
       </div>
+
+      {/* Loading Overlay */}
+      {(isLoading || isSaving) && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg p-6 shadow-xl`}>
+            <div className="flex items-center space-x-3">
+              <RefreshCw className="w-6 h-6 animate-spin text-amber-600" />
+              <span className="text-lg">{isLoading ? 'Loading...' : 'Saving...'}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cloud Migration Modal */}
+      {showMigrationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <Database className="w-6 h-6 text-amber-600" />
+                  <h2 className="text-2xl font-bold">Cloud Database Setup</h2>
+                </div>
+                <button
+                  onClick={() => setShowMigrationModal(false)}
+                  className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors`}
+                >
+                  <span className="text-2xl">&times;</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Status */}
+                <div className={`p-4 rounded-lg ${cloudStatus.enabled ? (darkMode ? 'bg-green-900 text-green-100' : 'bg-green-50 text-green-900') : (darkMode ? 'bg-gray-700' : 'bg-gray-100')}`}>
+                  <div className="flex items-center space-x-2 mb-2">
+                    {cloudStatus.enabled ? <Cloud className="w-5 h-5" /> : <CloudOff className="w-5 h-5" />}
+                    <span className="font-semibold">
+                      {cloudStatus.enabled ? 'Cloud Storage Active' : 'Cloud Storage Not Configured'}
+                    </span>
+                  </div>
+                  <p className="text-sm">
+                    {cloudStatus.enabled
+                      ? 'Your coffee data is being synced to Supabase cloud database.'
+                      : 'Set up Supabase to sync your coffee data across devices.'}
+                  </p>
+                  {cloudStatus.error && (
+                    <p className="text-sm text-red-400 mt-2">Error: {cloudStatus.error}</p>
+                  )}
+                </div>
+
+                {/* Setup Instructions */}
+                {!cloudStatus.enabled && (
+                  <div className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                    <h3 className="font-semibold mb-2">Setup Instructions:</h3>
+                    <ol className="list-decimal list-inside space-y-2 text-sm">
+                      <li>Create a free account at <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="text-amber-600 hover:underline">supabase.com</a></li>
+                      <li>Create a new project</li>
+                      <li>Go to Settings → API</li>
+                      <li>Copy your project URL and anon/public key</li>
+                      <li>Create a <code className={`px-1 py-0.5 rounded ${darkMode ? 'bg-gray-600' : 'bg-gray-200'}`}>.env</code> file in your project root:</li>
+                    </ol>
+                    <pre className={`mt-3 p-3 rounded text-xs overflow-x-auto ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+{`REACT_APP_SUPABASE_URL=your-project-url
+REACT_APP_SUPABASE_ANON_KEY=your-anon-key`}
+                    </pre>
+                    <ol start="6" className="list-decimal list-inside space-y-2 text-sm mt-3">
+                      <li>In Supabase SQL Editor, create the coffees table:</li>
+                    </ol>
+                    <pre className={`mt-2 p-3 rounded text-xs overflow-x-auto ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+{`CREATE TABLE coffees (
+  id BIGINT PRIMARY KEY,
+  cuppingTime TIMESTAMP,
+  roaster TEXT,
+  description TEXT,
+  origin TEXT,
+  url TEXT,
+  percentArabica INTEGER,
+  percentRobusta INTEGER,
+  roastLevel TEXT,
+  brewingMethod TEXT,
+  recommendedMethod TEXT,
+  grinded BOOLEAN,
+  grindingTime TEXT,
+  grindingDegree TEXT,
+  preparationNotes TEXT,
+  coffeeAmount TEXT,
+  servings TEXT,
+  cremaRating INTEGER,
+  tasteRating INTEGER,
+  tasteNotes TEXT,
+  comment TEXT,
+  favorite BOOLEAN,
+  price TEXT,
+  packageSize INTEGER,
+  currency TEXT,
+  coffeeGroup TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);`}
+                    </pre>
+                    <ol start="7" className="list-decimal list-inside space-y-2 text-sm mt-3">
+                      <li>Restart your development server</li>
+                      <li>Refresh this page - the cloud icon should turn green</li>
+                    </ol>
+                  </div>
+                )}
+
+                {/* Migration Button */}
+                {cloudStatus.enabled && (
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={handleMigrateToCloud}
+                      disabled={cloudStatus.syncing}
+                      className={`flex-1 py-3 rounded-lg font-semibold transition-colors ${
+                        cloudStatus.syncing
+                          ? (darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-400')
+                          : (darkMode ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white')
+                      }`}
+                    >
+                      {cloudStatus.syncing ? 'Migrating...' : 'Migrate localStorage to Cloud'}
+                    </button>
+                  </div>
+                )}
+
+                <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <p><strong>Note:</strong> This app automatically falls back to localStorage if cloud is not configured. Your data is always safe locally.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
