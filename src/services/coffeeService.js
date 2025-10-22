@@ -168,10 +168,13 @@ class CoffeeService {
         return { success: true, message: 'No data to migrate' };
       }
 
-      // Upload to Supabase
+      // Use upsert to handle existing entries (insert or update)
       const { error } = await supabase
         .from(TABLE_NAME)
-        .insert(localData);
+        .upsert(localData, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        });
 
       if (error) throw error;
 
