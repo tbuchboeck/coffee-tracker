@@ -9,7 +9,8 @@ A comprehensive React application for coffee enthusiasts to track, rate, and ana
 ### 🏠 Core Functionality
 - **Coffee Management**: Add, edit, delete, and copy coffee entries
 - **Grouped Variations**: Track same coffee with different preparation methods
-- **Data Persistence**: Automatic saving to browser localStorage with versioning
+- **Cloud Database Support**: Optional Supabase integration for cloud storage and multi-device sync
+- **Data Persistence**: Automatic saving to cloud database (if configured) or browser localStorage with versioning
 - **Export/Import**: Download and upload JSON backups, PDF export for collection
 - **Rich Data Tracking**: 
   - Roaster and coffee name
@@ -44,10 +45,12 @@ A comprehensive React application for coffee enthusiasts to track, rate, and ana
 ## Tech Stack
 
 - **Frontend Framework**: React 18.2
+- **Database**: Supabase (optional, PostgreSQL)
 - **Styling**: Tailwind CSS (CDN)
 - **Charts**: Recharts
 - **Icons**: Lucide React
 - **Build Tool**: Create React App
+- **Storage**: Cloud database (Supabase) or localStorage fallback
 
 ## Project Structure
 
@@ -77,12 +80,17 @@ cd coffee-tracker
 npm install
 ```
 
-3. Start the development server:
+3. (Optional) Set up cloud database:
+   - See [CLOUD_SETUP.md](CLOUD_SETUP.md) for detailed instructions
+   - Create a free Supabase account and configure `.env` file
+   - Without cloud setup, the app works with localStorage
+
+4. Start the development server:
 ```bash
 npm start
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ## Usage
 
@@ -160,12 +168,32 @@ The application comes pre-loaded with 25 coffee samples from various roasters in
 
 ## Data Persistence
 
-### Local Storage
-The application automatically saves all your coffee data to browser localStorage:
+### Cloud Database (Recommended)
+With Supabase configured, your data is stored in the cloud:
+- ✅ **Sync across devices**: Access from any browser
+- ✅ **Automatic backups**: Data safely stored in PostgreSQL
+- ✅ **No size limits**: Much larger than localStorage (500MB free tier)
+- ✅ **Always available**: Survives browser data clearing
+- ✅ **Free**: No credit card required
+- 🟢 **Status indicator**: Green cloud icon when active
+
+See [CLOUD_SETUP.md](CLOUD_SETUP.md) for setup instructions.
+
+### Local Storage (Fallback)
+Without cloud setup, the app uses browser localStorage:
 - Data persists between browser sessions
 - Dark mode preference is also saved
 - No server or account required
 - Data is stored locally on your device
+- Limited to 5-10MB depending on browser
+- ⚪ **Status indicator**: Gray cloud icon when active
+
+### Migration Tool
+Built-in tool to move localStorage data to cloud:
+1. Click the cloud icon in the header
+2. Click "Migrate localStorage to Cloud"
+3. Your existing data uploads to Supabase
+4. Future changes sync automatically
 
 ### Export/Import
 - **Export**: Click the download button (↓) in the header to save your collection as a JSON file
@@ -173,9 +201,10 @@ The application automatically saves all your coffee data to browser localStorage
 - Import options:
   - Replace: Completely replace current data with imported data
   - Merge: Add imported coffees to your existing collection
+- Works with both cloud and localStorage
 
 ### Backup Recommendations
-- Regularly export your data to create backups
+- Regularly export your data to create backups (even with cloud)
 - Exported files include:
   - All coffee entries with complete data
   - Export version for compatibility
@@ -183,25 +212,33 @@ The application automatically saves all your coffee data to browser localStorage
 
 ## Limitations
 
-- **Browser-Specific Storage**: localStorage data is tied to the specific browser and device
-- **Storage Limits**: Most browsers limit localStorage to 5-10MB
-- **No Cloud Sync**: Data doesn't sync across devices
-- **No User Accounts**: Single-user application
-- **No Sharing**: Cannot share collections or individual coffees directly
+### With Cloud Database (Supabase)
+- **Authentication**: Current setup allows anyone with credentials to access data (can be improved with Supabase Auth)
+- **No Sharing**: Cannot share collections with other users (yet)
+
+### With localStorage Only
+- **Browser-Specific**: Data tied to specific browser and device
+- **Storage Limits**: 5-10MB limit depending on browser
+- **No Sync**: Data doesn't sync across devices
+- **Data Loss Risk**: Cleared if browser data is deleted
+
+### General
+- **No User Accounts**: Single-user application (can be added with Supabase Auth)
+- **No Photos**: Cannot upload images of coffee bags (yet)
 
 ## Future Enhancements
 
 Potential improvements for the application:
-- Add cloud storage/sync capabilities
+- ✅ ~~Add cloud storage/sync capabilities~~ (Completed - Supabase integration)
+- Add user authentication (Supabase Auth)
 - Implement CSV export format
 - Add photo upload for coffee bags
-- Create brewing method tracking
-- Add cupping session notes
-- Implement coffee bean inventory management
-- Add price tracking and cost analytics
 - Create shareable coffee profiles
+- Add multi-user support with privacy controls
+- Implement coffee bean inventory management
 - Add data visualization for export statistics
 - Implement automatic backup reminders
+- Add mobile app version (React Native)
 
 ## Development
 
@@ -217,8 +254,10 @@ Potential improvements for the application:
 Main dependencies:
 - react: ^18.2.0
 - react-dom: ^18.2.0
-- recharts: ^2.15.3
-- lucide-react: ^0.263.1
+- @supabase/supabase-js: ^2.x (cloud database)
+- recharts: ^2.15.3 (data visualization)
+- lucide-react: ^0.263.1 (icons)
+- jspdf: ^2.5.1 (PDF export)
 - react-scripts: 5.0.1
 
 ## Browser Support
