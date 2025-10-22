@@ -44,6 +44,29 @@ const COLUMN_MAPPING = {
 };
 
 /**
+ * Sanitize value for PostgreSQL - handle type conversions
+ */
+const sanitizeValue = (key, value) => {
+  // Integer fields that need proper conversion
+  const integerFields = ['percentarabica', 'percentrobusta', 'cremarating', 'tasterating', 'packagesize'];
+
+  if (integerFields.includes(key)) {
+    // Handle null/undefined/empty
+    if (value === null || value === undefined || value === '') return null;
+
+    // Convert string to number, replacing comma with period (European decimals)
+    const numValue = typeof value === 'string'
+      ? parseFloat(value.replace(',', '.'))
+      : value;
+
+    // Round to integer
+    return Math.round(numValue);
+  }
+
+  return value;
+};
+
+/**
  * Convert camelCase keys to lowercase for PostgreSQL
  */
 const toLowerCaseKeys = (obj) => {
@@ -53,7 +76,8 @@ const toLowerCaseKeys = (obj) => {
   const newObj = {};
   for (const key in obj) {
     if (obj.hasOwnProperty(key)) {
-      newObj[key.toLowerCase()] = obj[key];
+      const lowerKey = key.toLowerCase();
+      newObj[lowerKey] = sanitizeValue(lowerKey, obj[key]);
     }
   }
   return newObj;
