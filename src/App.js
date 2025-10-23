@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Coffee, Star, Search, Trash2, Edit3, Calendar, Percent, ExternalLink, BarChart3, Moon, Sun, Download, Upload, FileText, RefreshCw, RotateCcw, Copy, ChevronDown, ChevronUp, Check, Cloud, CloudOff, Database } from 'lucide-react';
+import { Plus, Coffee, Star, Search, Trash2, Edit3, Calendar, Percent, ExternalLink, BarChart3, Moon, Sun, Download, Upload, FileText, RefreshCw, RotateCcw, Copy, ChevronDown, ChevronUp, Check, Cloud, CloudOff, Database, LogOut } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
 import { personalCoffees } from './personal_coffees';
 import { coffeeService } from './services/coffeeService';
+import { authService } from './services/authService';
+import Login from './components/Login';
 
 // Personal coffee collection - your complete 25 coffee database
 const defaultCoffees = personalCoffees;
@@ -31,6 +33,8 @@ const CoffeeTracker = () => {
     error: null
   });
   const [showMigrationModal, setShowMigrationModal] = useState(false);
+  const [user, setUser] = useState(null);
+  const [authChecking, setAuthChecking] = useState(true);
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
 
@@ -92,21 +96,51 @@ const CoffeeTracker = () => {
   // Data version for migration management
   const DATA_VERSION = '2.1';
 
+  // Check authentication status on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (coffeeService.isCloudEnabled()) {
+        const currentUser = await authService.getCurrentUser();
+        setUser(currentUser);
+      }
+      setAuthChecking(false);
+    };
+
+    checkAuth();
+
+    // Listen for auth state changes
+    const { data: subscription } = authService.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription?.subscription?.unsubscribe();
+    };
+  }, []);
+
   // Load data from database on mount
   useEffect(() => {
     const loadData = async () => {
+      // If cloud is enabled but user is not authenticated yet, skip loading
+      if (coffeeService.isCloudEnabled() && !user && !authChecking) {
+        setIsLoading(false);
+        return;
+      }
+
+      // If still checking auth, wait
+      if (coffeeService.isCloudEnabled() && authChecking) {
+        return;
+      }
+
       setIsLoading(true);
       try {
         const data = await coffeeService.getAllCoffees();
 
-        if (data.length === 0) {
-          // No data in database, use defaults
+        if (data.length === 0 && !coffeeService.isCloudEnabled()) {
+          // No data in localStorage, use defaults (only for localStorage mode)
           console.log('🔄 No data found, using default data');
           setCoffees(defaultCoffees);
-          // Save defaults to database
-          if (coffeeService.isCloudEnabled()) {
-            await coffeeService.saveAllCoffees(defaultCoffees);
-          }
         } else {
           // Convert date strings back to Date objects
           const coffeesWithDates = data.map(coffee => ({
@@ -129,8 +163,8 @@ const CoffeeTracker = () => {
           ...prev,
           error: 'Failed to load data'
         }));
-        // Fall back to default data on error
-        setCoffees(defaultCoffees);
+        // Fall back to empty for authenticated users
+        setCoffees([]);
       } finally {
         setIsLoading(false);
       }
@@ -143,7 +177,7 @@ const CoffeeTracker = () => {
     }
 
     loadData();
-  }, []);
+  }, [user, authChecking]); // Reload when user changes
 
   // Note: Data is now saved immediately on each operation via coffeeService
   // No need for auto-save useEffect anymore
@@ -1021,6 +1055,24 @@ const CoffeeTracker = () => {
     }
   };
 
+  // Handle sign out
+  const handleSignOut = async () => {
+    if (window.confirm('Are you sure you want to sign out?')) {
+      const result = await authService.signOut();
+      if (result.success) {
+        setUser(null);
+        setCoffees([]);
+      } else {
+        alert('Failed to sign out: ' + result.error);
+      }
+    }
+  };
+
+  // Handle login
+  const handleLogin = (loggedInUser) => {
+    setUser(loggedInUser);
+  };
+
   // Check localStorage usage
   const getStorageInfo = () => {
     try {
@@ -1650,6 +1702,23 @@ const CoffeeTracker = () => {
     return null;
   };
 
+  // Show loading while checking authentication
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
+        <div className="text-center">
+          <Coffee className="w-16 h-16 text-amber-600 mx-auto mb-4 animate-pulse" />
+          <p className="text-gray-600 text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login screen if cloud is enabled and user is not authenticated
+  if (coffeeService.isCloudEnabled() && !user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-amber-50 to-orange-100'} p-4 transition-colors`}>
       <div className="max-w-6xl mx-auto">
@@ -1682,9 +1751,20 @@ const CoffeeTracker = () => {
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-200 text-gray-700'} transition-colors`}
+                title="Toggle dark mode"
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
+              {/* Sign Out Button (only show when authenticated and cloud enabled) */}
+              {coffeeService.isCloudEnabled() && user && (
+                <button
+                  onClick={handleSignOut}
+                  className={`p-2 rounded-lg ${darkMode ? 'bg-red-900 text-red-300 hover:bg-red-800' : 'bg-red-100 text-red-700 hover:bg-red-200'} transition-colors`}
+                  title="Sign out"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              )}
               <button
                 onClick={handleExport}
                 className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} transition-colors`}

@@ -15,6 +15,7 @@ const TABLE_NAME = 'coffees';
  */
 const COLUMN_MAPPING = {
   'id': 'id',
+  'user_id': 'user_id',
   'cuppingtime': 'cuppingTime',
   'roaster': 'roaster',
   'description': 'description',
@@ -124,9 +125,18 @@ class CoffeeService {
   async getAllCoffees() {
     if (this.useCloud) {
       try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          console.warn('No authenticated user, returning empty array');
+          return [];
+        }
+
         const { data, error } = await supabase
           .from(TABLE_NAME)
           .select('*')
+          .eq('user_id', user.id) // Filter by current user
           .order('cuppingtime', { ascending: false }); // lowercase for PostgreSQL
 
         if (error) throw error;
@@ -150,8 +160,18 @@ class CoffeeService {
   async addCoffee(coffee) {
     if (this.useCloud) {
       try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          return { success: false, error: 'No authenticated user' };
+        }
+
+        // Add user_id to coffee data
+        const coffeeWithUser = { ...coffee, user_id: user.id };
+
         // Convert camelCase to lowercase for PostgreSQL
-        const coffeeForDb = toLowerCaseKeys(coffee);
+        const coffeeForDb = toLowerCaseKeys(coffeeWithUser);
 
         const { data, error } = await supabase
           .from(TABLE_NAME)
@@ -225,18 +245,28 @@ class CoffeeService {
   async saveAllCoffees(coffees) {
     if (this.useCloud) {
       try {
-        // Delete all existing entries
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+          return { success: false, error: 'No authenticated user' };
+        }
+
+        // Delete all existing entries for this user
         const { error: deleteError } = await supabase
           .from(TABLE_NAME)
           .delete()
-          .neq('id', 0); // Delete all records
+          .eq('user_id', user.id); // Delete only current user's records
 
         if (deleteError) throw deleteError;
 
         // Insert all new entries
         if (coffees.length > 0) {
+          // Add user_id to all coffees
+          const coffeesWithUser = coffees.map(coffee => ({ ...coffee, user_id: user.id }));
+
           // Convert camelCase to lowercase for PostgreSQL
-          const coffeesForDb = coffees.map(coffee => toLowerCaseKeys(coffee));
+          const coffeesForDb = coffeesWithUser.map(coffee => toLowerCaseKeys(coffee));
 
           const { error: insertError } = await supabase
             .from(TABLE_NAME)
@@ -264,6 +294,13 @@ class CoffeeService {
     }
 
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        return { success: false, error: 'No authenticated user' };
+      }
+
       // Get data from localStorage
       const localData = this._getFromLocalStorage();
 
@@ -271,8 +308,11 @@ class CoffeeService {
         return { success: true, message: 'No data to migrate' };
       }
 
+      // Add user_id to all coffees
+      const dataWithUser = localData.map(coffee => ({ ...coffee, user_id: user.id }));
+
       // Convert camelCase to lowercase for PostgreSQL
-      const dataForDb = localData.map(coffee => toLowerCaseKeys(coffee));
+      const dataForDb = dataWithUser.map(coffee => toLowerCaseKeys(coffee));
 
       // Use upsert to handle existing entries (insert or update)
       const { error } = await supabase
