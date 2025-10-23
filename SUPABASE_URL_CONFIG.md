@@ -2,29 +2,41 @@
 
 ## The Problem
 
-When testing authentication locally (`localhost:3000`), Supabase sends confirmation emails with `localhost` links. These won't work when you're not running the app locally.
+After signing up on your GitHub Pages app, Supabase redirects you to `localhost:3000` instead of keeping you on GitHub Pages!
 
-For your **GitHub Pages deployment**, you need to configure Supabase to use your production URL.
+**Why?** Supabase is configured with the wrong redirect URL.
 
-## Steps to Fix
+For your **GitHub Pages deployment**, you need to configure Supabase to use your production URL, not localhost.
+
+## Steps to Fix (DO THIS NOW!)
 
 ### 1. Go to Supabase Dashboard
 Visit: https://app.supabase.com → Your Project → **Authentication** → **URL Configuration**
 
-### 2. Set Site URL
-Replace the default with your GitHub Pages URL:
+### 2. Set Site URL (MOST IMPORTANT!)
+Replace `http://localhost:3000` with your GitHub Pages URL:
 ```
 https://tbuchboeck.github.io/coffee-tracker/
 ```
 
-### 3. Add Redirect URLs (Optional but Recommended)
-Add both localhost (for testing) and production:
+### 3. Add Redirect URLs
+Under "Redirect URLs", add your GitHub Pages URL:
 ```
-http://localhost:3000/**
 https://tbuchboeck.github.io/coffee-tracker/**
 ```
 
+**Optional**: Also add localhost if you want to test locally:
+```
+http://localhost:3000/**
+```
+
 ### 4. Save Changes
+
+### 5. Test Again
+- Go to your GitHub Pages app (not localhost!)
+- Sign out or use incognito mode
+- Sign up or sign in
+- Should stay on GitHub Pages now! ✅
 
 ## What This Does
 
