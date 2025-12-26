@@ -1,4 +1,5 @@
-import { supabase, isSupabaseConfigured } from '../supabaseClient';
+import { supabase } from '../supabaseClient';
+// Auth disabled: import { isSupabaseConfigured } from '../supabaseClient';
 
 // Storage keys for localStorage fallback
 const STORAGE_KEY = 'coffeeTrackerData';
@@ -109,7 +110,8 @@ const toCamelCaseKeys = (obj) => {
  */
 class CoffeeService {
   constructor() {
-    this.useCloud = isSupabaseConfigured();
+    // Force localStorage mode - cloud/auth disabled
+    this.useCloud = false; // was: isSupabaseConfigured();
   }
 
   /**

@@ -4,8 +4,8 @@ import { LineChart, Line, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, 
 import jsPDF from 'jspdf';
 import { personalCoffees } from './personal_coffees';
 import { coffeeService } from './services/coffeeService';
-import { authService } from './services/authService';
-import Login from './components/Login';
+// Auth disabled: import { authService } from './services/authService';
+// Auth disabled: import Login from './components/Login';
 
 // Personal coffee collection - your complete 25 coffee database
 const defaultCoffees = personalCoffees;
@@ -34,7 +34,7 @@ const CoffeeTracker = () => {
   });
   const [showMigrationModal, setShowMigrationModal] = useState(false);
   const [user, setUser] = useState(null);
-  const [authChecking, setAuthChecking] = useState(true);
+  const [authChecking, setAuthChecking] = useState(false); // Disabled auth check
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
 
@@ -96,42 +96,22 @@ const CoffeeTracker = () => {
   // Data version for migration management
   const DATA_VERSION = '2.1';
 
+  // Authentication disabled - using localStorage mode only
   // Check authentication status on mount
   useEffect(() => {
-    const checkAuth = async () => {
-      if (coffeeService.isCloudEnabled()) {
-        const currentUser = await authService.getCurrentUser();
-        setUser(currentUser);
-      }
-      setAuthChecking(false);
-    };
+    // Skip auth check - always use localStorage mode
+    setAuthChecking(false);
+    setUser(null);
 
-    checkAuth();
-
-    // Listen for auth state changes
-    const { data: subscription } = authService.onAuthStateChange((event, session) => {
-      setUser(session?.user || null);
-    });
-
-    // Cleanup subscription on unmount
-    return () => {
-      subscription?.subscription?.unsubscribe();
-    };
+    // No auth state change listener needed
+    return () => {};
   }, []);
 
   // Load data from database on mount
   useEffect(() => {
     const loadData = async () => {
-      // If cloud is enabled but user is not authenticated yet, skip loading
-      if (coffeeService.isCloudEnabled() && !user && !authChecking) {
-        setIsLoading(false);
-        return;
-      }
-
-      // If still checking auth, wait
-      if (coffeeService.isCloudEnabled() && authChecking) {
-        return;
-      }
+      // Skip cloud/auth checks - always use localStorage
+      // (Auth is disabled)
 
       setIsLoading(true);
       try {
@@ -1055,23 +1035,23 @@ const CoffeeTracker = () => {
     }
   };
 
-  // Handle sign out
-  const handleSignOut = async () => {
-    if (window.confirm('Are you sure you want to sign out?')) {
-      const result = await authService.signOut();
-      if (result.success) {
-        setUser(null);
-        setCoffees([]);
-      } else {
-        alert('Failed to sign out: ' + result.error);
-      }
-    }
-  };
+  // Auth disabled - handleSignOut removed
+  // const handleSignOut = async () => {
+  //   if (window.confirm('Are you sure you want to sign out?')) {
+  //     const result = await authService.signOut();
+  //     if (result.success) {
+  //       setUser(null);
+  //       setCoffees([]);
+  //     } else {
+  //       alert('Failed to sign out: ' + result.error);
+  //     }
+  //   }
+  // };
 
-  // Handle login
-  const handleLogin = (loggedInUser) => {
-    setUser(loggedInUser);
-  };
+  // Auth disabled - handleLogin removed
+  // const handleLogin = (loggedInUser) => {
+  //   setUser(loggedInUser);
+  // };
 
   // Check localStorage usage
   const getStorageInfo = () => {
@@ -1714,10 +1694,8 @@ const CoffeeTracker = () => {
     );
   }
 
-  // Show login screen if cloud is enabled and user is not authenticated
-  if (coffeeService.isCloudEnabled() && !user) {
-    return <Login onLogin={handleLogin} />;
-  }
+  // Login disabled - always use localStorage mode
+  // (Authentication is completely disabled)
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-amber-50 to-orange-100'} p-4 transition-colors`}>
@@ -1755,16 +1733,7 @@ const CoffeeTracker = () => {
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
-              {/* Sign Out Button (only show when authenticated and cloud enabled) */}
-              {coffeeService.isCloudEnabled() && user && (
-                <button
-                  onClick={handleSignOut}
-                  className={`p-2 rounded-lg ${darkMode ? 'bg-red-900 text-red-300 hover:bg-red-800' : 'bg-red-100 text-red-700 hover:bg-red-200'} transition-colors`}
-                  title="Sign out"
-                >
-                  <LogOut className="w-5 h-5" />
-                </button>
-              )}
+              {/* Auth disabled - Sign Out Button removed */}
               <button
                 onClick={handleExport}
                 className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} transition-colors`}
