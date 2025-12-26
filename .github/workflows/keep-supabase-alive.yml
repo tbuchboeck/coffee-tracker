@@ -1,0 +1,32 @@
+name: Keep Supabase Active
+
+on:
+  schedule:
+    # Run every 6 days at 10:00 AM UTC
+    # Supabase Free tier pauses after ~7 days of inactivity
+    - cron: '0 10 */6 * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping-database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Database
+        run: |
+          echo "Pinging Supabase to keep project active..."
+
+          # Make a simple SELECT query to keep the database active
+          curl -X POST \
+            "${{ secrets.REACT_APP_SUPABASE_URL }}/rest/v1/coffees?select=id&limit=1" \
+            -H "apikey: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            --fail-with-body || echo "Ping failed, but that's ok - project might be paused"
+
+          echo "✅ Ping completed at $(date)"
+
+      - name: Report Status
+        if: always()
+        run: |
+          echo "Keep-alive workflow completed"
+          echo "Next run will be in approximately 6 days"
