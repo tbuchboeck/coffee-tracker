@@ -10,6 +10,13 @@ class AuthService {
    * Sign up a new user
    */
   async signUp(email, password) {
+    if (!supabase) {
+      return {
+        success: false,
+        error: 'Supabase is not configured'
+      };
+    }
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -36,6 +43,13 @@ class AuthService {
    * Sign in an existing user
    */
   async signIn(email, password) {
+    if (!supabase) {
+      return {
+        success: false,
+        error: 'Supabase is not configured'
+      };
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -62,6 +76,13 @@ class AuthService {
    * Sign out the current user
    */
   async signOut() {
+    if (!supabase) {
+      return {
+        success: false,
+        error: 'Supabase is not configured'
+      };
+    }
+
     try {
       const { error } = await supabase.auth.signOut();
 
@@ -81,6 +102,10 @@ class AuthService {
    * Get the current user
    */
   async getCurrentUser() {
+    if (!supabase) {
+      return null;
+    }
+
     try {
       const { data: { user }, error } = await supabase.auth.getUser();
 
@@ -97,6 +122,10 @@ class AuthService {
    * Get the current session
    */
   async getSession() {
+    if (!supabase) {
+      return null;
+    }
+
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -113,6 +142,17 @@ class AuthService {
    * Listen to auth state changes
    */
   onAuthStateChange(callback) {
+    if (!supabase) {
+      // Return a dummy subscription object
+      return {
+        data: {
+          subscription: {
+            unsubscribe: () => {}
+          }
+        }
+      };
+    }
+
     return supabase.auth.onAuthStateChange((event, session) => {
       callback(event, session);
     });
