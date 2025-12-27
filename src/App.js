@@ -218,6 +218,7 @@ const CoffeeTracker = () => {
     'NI': { flag: '🇳🇮', name: 'Nicaragua' },
     'IT': { flag: '🇮🇹', name: 'Italy' },
     'GT': { flag: '🇬🇹', name: 'Guatemala' },
+    'HN': { flag: '🇭🇳', name: 'Honduras' },
     'UG': { flag: '🇺🇬', name: 'Uganda' },
     'CR': { flag: '🇨🇷', name: 'Costa Rica' },
     'CO': { flag: '🇨🇴', name: 'Colombia' },
