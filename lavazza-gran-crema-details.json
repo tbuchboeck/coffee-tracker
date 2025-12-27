@@ -41,17 +41,18 @@
     "best_use": "Ideal for espresso preparation, suitable for moka pot, drip coffee, and French press"
   },
   "price_reference": {
-    "average_price_germany_2025": "16.50",
+    "paid_price": "31.99",
     "currency": "EUR",
     "price_range": {
       "budget": "10.89 - 12.77 EUR (with subscription discounts)",
-      "regular_retail": "~20.99 EUR"
+      "regular_retail": "~20.99 EUR",
+      "premium": "up to 31.99 EUR"
     },
     "cost_per_cup": {
-      "amount": "~0.30",
+      "amount": "~0.58",
       "currency": "EUR",
-      "calculation": "16.50 EUR ÷ 55 cups = 0.30 EUR per cup"
+      "calculation": "31.99 EUR ÷ 55 cups = 0.58 EUR per cup"
     },
-    "note": "Prices vary by region and retailer. Average based on German market research 2025."
+    "note": "Actual price paid: 31.99 EUR. Prices vary by region and retailer. Market range based on German research 2025."
   }
 }

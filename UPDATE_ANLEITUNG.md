@@ -31,7 +31,7 @@ SET
   comment = 'Intensity 7/10, smooth medium roast, blend of South American Arabica (40%) and Southeast Asian Robusta (60%). Best for espresso machine or moka pot.',
   packagesize = 1000,
   coffeeamount = '18',
-  price = '16.50',
+  price = '31.99',
   currency = 'EUR'
 WHERE roaster ILIKE '%lavazza%'
   AND (description ILIKE '%gran crema%' OR description ILIKE '%grand crema%' OR description ILIKE '%barista gran%');
@@ -76,9 +76,9 @@ WHERE roaster ILIKE '%lavazza%'
 
 **Verpackung & Preis:**
 - **Package Size:** `1000` (Gramm)
-- **Price:** `16.50`
+- **Price:** `31.99`
 - **Currency:** `EUR`
-- **Kosten pro Tasse:** ~0,30 EUR (bei 18g Dosierung)
+- **Kosten pro Tasse:** ~0,58 EUR (bei 18g Dosierung)
 
 5. Speichere die Änderungen
 
@@ -147,10 +147,10 @@ Für manuelles Copy-Paste in die Web-App:
 | **comment** | Intensity 7/10, smooth medium roast, blend of South American Arabica (40%) and Southeast Asian Robusta (60%). Best for espresso machine or moka pot. |
 | **packageSize** | 1000 |
 | **coffeeAmount** | 18 |
-| **price** | 16.50 |
+| **price** | 31.99 |
 | **currency** | EUR |
 
-**Kosten pro Tasse:** ~0,30 EUR (1000g ÷ 18g = 55 Tassen; 16,50 EUR ÷ 55 = 0,30 EUR)
+**Kosten pro Tasse:** ~0,58 EUR (1000g ÷ 18g = 55 Tassen; 31,99 EUR ÷ 55 = 0,58 EUR)
 
 ---
 

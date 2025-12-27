@@ -99,7 +99,7 @@ UPDATE_DATA='{
   "comment": "Intensity 7/10, smooth medium roast, blend of South American Arabica (40%) and Southeast Asian Robusta (60%). Best for espresso machine or moka pot.",
   "packagesize": 1000,
   "coffeeamount": "18",
-  "price": "16.50",
+  "price": "31.99",
   "currency": "EUR"
 }'
 
@@ -112,8 +112,8 @@ echo "   • Intensity: 7/10"
 echo "   • Taste Notes: dark chocolate, spices, honey, roasted coffee, velvety"
 echo "   • Package Size: 1000g"
 echo "   • Coffee Amount: 18g per cup"
-echo "   • Price: 16.50 EUR"
-echo "   • Cost per cup: ~0.30 EUR"
+echo "   • Price: 31.99 EUR"
+echo "   • Cost per cup: ~0.58 EUR"
 echo ""
 
 # Perform the update
