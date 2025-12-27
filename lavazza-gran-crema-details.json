@@ -29,12 +29,29 @@
     "unit": "grams",
     "typical_us_size": "2.2 lb (35.2 oz / 1000g)"
   },
+  "usage": {
+    "coffeeAmount": "18",
+    "unit": "grams per serving",
+    "servings_per_package": 55,
+    "note": "1000g ÷ 18g = ~55 cups per package"
+  },
   "additional_info": {
     "url": "https://www.lavazza.com/en/coffee-beans/espresso-barista-gran-crema",
     "comment": "Intensity 7/10, smooth medium roast, blend of South American Arabica (40%) and Southeast Asian Robusta (60%). Best for espresso machine or moka pot.",
     "best_use": "Ideal for espresso preparation, suitable for moka pot, drip coffee, and French press"
   },
   "price_reference": {
-    "note": "Prices vary by region and retailer. Typical range: $15-25 USD for 2.2 lb bag"
+    "average_price_germany_2025": "16.50",
+    "currency": "EUR",
+    "price_range": {
+      "budget": "10.89 - 12.77 EUR (with subscription discounts)",
+      "regular_retail": "~20.99 EUR"
+    },
+    "cost_per_cup": {
+      "amount": "~0.30",
+      "currency": "EUR",
+      "calculation": "16.50 EUR ÷ 55 cups = 0.30 EUR per cup"
+    },
+    "note": "Prices vary by region and retailer. Average based on German market research 2025."
   }
 }

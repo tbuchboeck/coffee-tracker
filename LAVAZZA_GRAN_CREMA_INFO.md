@@ -68,10 +68,20 @@
 
 ---
 
-## 💰 Preis
+## 💰 Preis & Kosten
 
-- **Typischer Preis:** €15-25 / $15-25 USD
-- **Hinweis:** Preise variieren je nach Händler und Region
+- **Durchschnittspreis Deutschland (2025):** 16,50 EUR
+- **Preisspanne:** 10,89 - 20,99 EUR
+  - Budget/Angebote: 10,89 - 12,77 EUR (mit Abo-Service)
+  - Regulärer Handel: ~20,99 EUR
+- **Packungsgröße:** 1000g (1 kg)
+
+### Kosten pro Tasse
+- **Dosierung:** 18g pro Tasse
+- **Anzahl Tassen:** ~55 Tassen pro Packung (1000g ÷ 18g)
+- **Kosten pro Tasse:** ~0,30 EUR
+
+**Sehr günstiger Kaffee bei guter Qualität!** 👍
 
 ---
 
@@ -108,6 +118,8 @@ Hier sind die Werte, die du in deine Datenbank eintragen kannst:
   "url": "https://www.lavazza.com/en/coffee-beans/espresso-barista-gran-crema",
   "comment": "Intensity 7/10, smooth medium roast, blend of South American Arabica (40%) and Southeast Asian Robusta (60%). Best for espresso machine or moka pot.",
   "packageSize": 1000,
+  "coffeeAmount": "18",
+  "price": "16.50",
   "currency": "EUR"
 }
 ```

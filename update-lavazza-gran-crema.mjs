@@ -33,6 +33,10 @@ const granCremaDetails = {
   brewingmethod: 'espresso',
   recommendedmethod: 'espresso',
   comment: 'Intensity 7/10, smooth medium roast, blend of South American Arabica (40%) and Southeast Asian Robusta (60%). Best for espresso machine or moka pot.',
+  packagesize: 1000,
+  coffeeamount: '18',
+  price: '16.50',
+  currency: 'EUR'
 };
 
 async function updateLavazzaGranCrema() {
