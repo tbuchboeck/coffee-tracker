@@ -1,0 +1,40 @@
+{
+  "product_name": "Lavazza Espresso Barista Gran Crema",
+  "roaster": "Lavazza",
+  "description": "Gran Crema Barista",
+  "blend_composition": {
+    "percentArabica": 40,
+    "percentRobusta": 60,
+    "details": "40% South American Arabica (Brazil, Honduras) and 60% Southeast Asian Robusta"
+  },
+  "origins": {
+    "origin_code": "BR,HN,AS",
+    "description": "Brazil, Honduras, Southeast Asia"
+  },
+  "roast": {
+    "roastLevel": "medium",
+    "intensity": "7/10"
+  },
+  "flavor_profile": {
+    "tasteNotes": "dark chocolate, spices, honey, roasted coffee, velvety",
+    "description": "Hints of dark chocolate and spices with every velvety sip. Aromatic notes of honey and roasted coffee."
+  },
+  "brewing": {
+    "brewingMethod": "espresso",
+    "recommendedMethod": "espresso",
+    "alternatives": "moka pot, drip coffee maker, French press"
+  },
+  "packaging": {
+    "packageSize": 1000,
+    "unit": "grams",
+    "typical_us_size": "2.2 lb (35.2 oz / 1000g)"
+  },
+  "additional_info": {
+    "url": "https://www.lavazza.com/en/coffee-beans/espresso-barista-gran-crema",
+    "comment": "Intensity 7/10, smooth medium roast, blend of South American Arabica (40%) and Southeast Asian Robusta (60%). Best for espresso machine or moka pot.",
+    "best_use": "Ideal for espresso preparation, suitable for moka pot, drip coffee, and French press"
+  },
+  "price_reference": {
+    "note": "Prices vary by region and retailer. Typical range: $15-25 USD for 2.2 lb bag"
+  }
+}
