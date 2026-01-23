@@ -1,28 +1,34 @@
-[
-  {
-    "id": 26,
-    "roaster": "Gorilla",
-    "description": "Delicato - Premium Roasted Coffee Beans",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "10",
-    "percentArabica": 40,
-    "percentRobusta": 60,
-    "cuppingTime": "2026-01-23T12:00:00.000Z",
-    "cremaRating": 5,
-    "tasteRating": 0,
-    "tasteNotes": "chocolate, nuts, floral, honey",
-    "url": "https://www.kaffee-joerges.de/kaffeesorten/gorilla-espresso-delicato",
-    "comment": "Intensität 7/10, Split-Roasting-Verfahren (Trommelröstung), Arabica aus südamerikanischem Hochland, Robusta aus Asien. Kaffeegroßrösterei A. Joerges GmbH seit 19. Jhd., Marke Gorilla seit 2004",
-    "origin": "SA,AS",
-    "roastLevel": "dark",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "18.75",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Siebträger, Vollautomat, Espresso Kanne",
-    "coffeeGroup": ""
-  }
-]
+{
+  "version": "1.0",
+  "exportDate": "2026-01-23T21:15:00.000Z",
+  "coffees": [
+    {
+      "id": 26,
+      "cuppingTime": "2026-01-23T12:00:00.000Z",
+      "roaster": "Gorilla",
+      "description": "Delicato - Premium Roasted Coffee Beans",
+      "origin": "SA,AS",
+      "url": "https://www.kaffee-joerges.de/kaffeesorten/gorilla-espresso-delicato",
+      "percentArabica": 40,
+      "percentRobusta": 60,
+      "roastLevel": "dark",
+      "brewingMethod": "espresso",
+      "recommendedMethod": "espresso",
+      "grinded": false,
+      "grindingTime": "",
+      "grindingDegree": "10",
+      "preparationNotes": "Siebträger, Vollautomat, Espresso Kanne",
+      "coffeeAmount": null,
+      "servings": null,
+      "cremaRating": 5,
+      "tasteRating": 0,
+      "tasteNotes": "chocolate, nuts, floral, honey",
+      "comment": "Intensität 7/10, Split-Roasting-Verfahren (Trommelröstung), Arabica aus südamerikanischem Hochland, Robusta aus Asien. Kaffeegroßrösterei A. Joerges GmbH seit 19. Jhd., Marke Gorilla seit 2004",
+      "favorite": false,
+      "price": "18.75",
+      "packageSize": 1000,
+      "currency": "EUR",
+      "coffeeGroup": ""
+    }
+  ]
+}
