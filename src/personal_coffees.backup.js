@@ -632,5 +632,31 @@ export const personalCoffees = [
     "coffeeGroup": "eduscho-espresso-intenso",
     "id": 1749481555147,
     "cuppingTime": new Date("2025-06-09T15:05:55.147Z")
+  },
+  {
+    "id": 26,
+    "roaster": "Gorilla",
+    "description": "Delicato - Premium Roasted Coffee Beans",
+    "favorite": false,
+    "grinded": false,
+    "grindingTime": "",
+    "grindingDegree": "10",
+    "percentArabica": 40,
+    "percentRobusta": 60,
+    "cuppingTime": new Date("2026-01-23T12:00:00.000Z"),
+    "cremaRating": 5,
+    "tasteRating": 0,
+    "tasteNotes": "chocolate, nuts, floral, honey",
+    "url": "https://www.kaffee-joerges.de/kaffeesorten/gorilla-espresso-delicato",
+    "comment": "Intensität 7/10, Split-Roasting-Verfahren (Trommelröstung), Arabica aus südamerikanischem Hochland, Robusta aus Asien. Kaffeegroßrösterei A. Joerges GmbH seit 19. Jhd., Marke Gorilla seit 2004",
+    "origin": "SA,AS",
+    "roastLevel": "dark",
+    "brewingMethod": "espresso",
+    "recommendedMethod": "espresso",
+    "price": "18.75",
+    "packageSize": 1000,
+    "currency": "EUR",
+    "preparationNotes": "Siebträger, Vollautomat, Espresso Kanne",
+    "coffeeGroup": ""
   }
 ];
