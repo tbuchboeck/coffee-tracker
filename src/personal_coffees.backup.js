@@ -632,31 +632,5 @@ export const personalCoffees = [
     "coffeeGroup": "eduscho-espresso-intenso",
     "id": 1749481555147,
     "cuppingTime": new Date("2025-06-09T15:05:55.147Z")
-  },
-  {
-    "id": 26,
-    "roaster": "Gorilla",
-    "description": "Delicato - Premium Roasted Coffee Beans",
-    "favorite": false,
-    "grinded": false,
-    "grindingTime": "",
-    "grindingDegree": "",
-    "percentArabica": 50,
-    "percentRobusta": 50,
-    "cuppingTime": new Date("2026-01-23T12:00:00.000Z"),
-    "cremaRating": 0,
-    "tasteRating": 0,
-    "tasteNotes": "feine florale Note, delikater Blend",
-    "url": "https://www.kaffee-joerges.de",
-    "comment": "Intensität 7/10, medium strong dark roast, geeignet für Siebträger, Vollautomat und Espresso Kanne. Kaffeegroßrösterei A. Joerges GmbH, Obertshausen",
-    "origin": "DE",
-    "roastLevel": "medium-dark",
-    "brewingMethod": "espresso",
-    "recommendedMethod": "espresso",
-    "price": "",
-    "packageSize": 1000,
-    "currency": "EUR",
-    "preparationNotes": "Siebträger, Vollautomat, Espresso Kanne",
-    "coffeeGroup": ""
   }
 ];
