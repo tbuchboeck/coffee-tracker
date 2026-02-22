@@ -111,6 +111,9 @@ class CoffeeService {
   constructor() {
     // Use cloud storage if Supabase is configured (auth disabled, no user filtering)
     this.useCloud = isSupabaseConfigured();
+    // Tracks whether the last fetch fell back from Supabase to local data
+    this.lastFetchWasFallback = false;
+    this.lastFetchError = null;
   }
 
   /**
@@ -121,9 +124,26 @@ class CoffeeService {
   }
 
   /**
+   * Check if the last fetch fell back to local data due to a Supabase error
+   */
+  didFallBack() {
+    return this.lastFetchWasFallback;
+  }
+
+  /**
+   * Get the error from the last failed Supabase fetch
+   */
+  getLastFetchError() {
+    return this.lastFetchError;
+  }
+
+  /**
    * Get all coffees from storage
    */
   async getAllCoffees() {
+    this.lastFetchWasFallback = false;
+    this.lastFetchError = null;
+
     if (this.useCloud) {
       try {
         // Auth disabled - get all coffees without user filtering
@@ -139,6 +159,10 @@ class CoffeeService {
         return coffeesWithCamelCase;
       } catch (error) {
         console.error('Error fetching coffees from Supabase:', error);
+        this.lastFetchWasFallback = true;
+        this.lastFetchError = error.name === 'AbortError'
+          ? 'Datenbank-Verbindung Timeout (Server nicht erreichbar)'
+          : error.message || 'Unbekannter Datenbankfehler';
         // Fallback to localStorage on error
         return this._getFromLocalStorage();
       }

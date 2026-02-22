@@ -116,11 +116,16 @@ const CoffeeTracker = () => {
       setIsLoading(true);
       try {
         const data = await coffeeService.getAllCoffees();
+        const wasFallback = coffeeService.didFallBack();
+        const fetchError = coffeeService.getLastFetchError();
 
-        if (data.length === 0 && !coffeeService.isCloudEnabled()) {
-          // No data in localStorage, use defaults (only for localStorage mode)
+        if (data.length === 0) {
+          // No data from any source - use defaults
           console.log('🔄 No data found, using default data');
           setCoffees(defaultCoffees);
+          if (wasFallback) {
+            console.warn('⚠️ Supabase failed, localStorage empty → using default coffees');
+          }
         } else {
           // Convert date strings back to Date objects
           const coffeesWithDates = data.map(coffee => ({
@@ -128,14 +133,18 @@ const CoffeeTracker = () => {
             cuppingTime: new Date(coffee.cuppingTime)
           }));
           setCoffees(coffeesWithDates);
-          console.log(`✅ Loaded ${data.length} coffee entries from database`);
+          if (wasFallback) {
+            console.warn(`⚠️ Supabase not reachable, showing ${data.length} coffees from local fallback`);
+          } else {
+            console.log(`✅ Loaded ${data.length} coffee entries from database`);
+          }
         }
 
-        // Update cloud status
+        // Update cloud status - show error if fallback was used
         setCloudStatus(prev => ({
           ...prev,
           enabled: coffeeService.isCloudEnabled(),
-          error: null
+          error: wasFallback ? (fetchError || 'Supabase connection failed - showing local data') : null
         }));
       } catch (error) {
         console.error('❌ Error loading data:', error);
@@ -143,8 +152,8 @@ const CoffeeTracker = () => {
           ...prev,
           error: 'Failed to load data'
         }));
-        // Fall back to empty for authenticated users
-        setCoffees([]);
+        // Last resort: use default coffees instead of empty list
+        setCoffees(defaultCoffees);
       } finally {
         setIsLoading(false);
       }
@@ -1709,7 +1718,15 @@ const CoffeeTracker = () => {
             </div>
             <div className="flex items-center flex-wrap gap-2">
               {/* Cloud Status Indicator */}
-              {cloudStatus.enabled ? (
+              {cloudStatus.enabled && cloudStatus.error ? (
+                <button
+                  onClick={() => setShowMigrationModal(true)}
+                  className={`p-2 rounded-lg ${darkMode ? 'bg-amber-900 text-amber-300 hover:bg-amber-800' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'} transition-colors`}
+                  title={`Cloud-Verbindung fehlgeschlagen: ${cloudStatus.error} - Lokale Daten werden angezeigt`}
+                >
+                  <CloudOff className="w-5 h-5" />
+                </button>
+              ) : cloudStatus.enabled ? (
                 <button
                   onClick={() => setShowMigrationModal(true)}
                   className={`p-2 rounded-lg ${darkMode ? 'bg-green-900 text-green-300 hover:bg-green-800' : 'bg-green-100 text-green-700 hover:bg-green-200'} transition-colors`}
@@ -1800,6 +1817,17 @@ const CoffeeTracker = () => {
               </button>
             </div>
           </div>
+
+          {/* Cloud Fallback Warning Banner */}
+          {cloudStatus.enabled && cloudStatus.error && (
+            <div className={`mb-4 p-3 rounded-lg flex items-center gap-3 ${darkMode ? 'bg-amber-900/50 text-amber-200 border border-amber-700' : 'bg-amber-50 text-amber-800 border border-amber-300'}`}>
+              <CloudOff className="w-5 h-5 flex-shrink-0" />
+              <div className="text-sm">
+                <strong>Supabase nicht erreichbar:</strong> {cloudStatus.error}.
+                {' '}Es werden lokale Daten angezeigt ({coffees.length} Einträge).
+              </div>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
