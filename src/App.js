@@ -7,7 +7,7 @@ import { coffeeService } from './services/coffeeService';
 // Auth disabled: import { authService } from './services/authService';
 // Auth disabled: import Login from './components/Login';
 
-// Personal coffee collection - your complete 25 coffee database
+// Personal coffee collection - your complete 30 coffee database
 const defaultCoffees = personalCoffees;
 
 const CoffeeTracker = () => {
