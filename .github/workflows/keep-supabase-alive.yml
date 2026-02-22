@@ -34,11 +34,31 @@ jobs:
             -H "Authorization: Bearer ${SUPABASE_KEY}")
 
           if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
-            echo "✅ Ping successful (HTTP $HTTP_STATUS) at $(date)"
+            echo "✅ Database ping successful (HTTP $HTTP_STATUS) at $(date)"
           else
-            echo "⚠️ Ping returned HTTP $HTTP_STATUS"
+            echo "⚠️ Database ping returned HTTP $HTTP_STATUS"
             cat /tmp/response.txt
             echo ""
             echo "The project might be paused. Restore it at https://supabase.com/dashboard"
             exit 1
+          fi
+
+      - name: Ping Supabase Auth
+        env:
+          SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
+        run: |
+          echo "Pinging Supabase Auth service..."
+
+          # Hit the Auth settings endpoint to keep the auth service active
+          HTTP_STATUS=$(curl -s -o /tmp/auth_response.txt -w "%{http_code}" \
+            "${SUPABASE_URL}/auth/v1/settings" \
+            -H "apikey: ${SUPABASE_KEY}")
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Auth ping successful (HTTP $HTTP_STATUS) at $(date)"
+          else
+            echo "⚠️ Auth ping returned HTTP $HTTP_STATUS"
+            cat /tmp/auth_response.txt
+            echo ""
           fi
