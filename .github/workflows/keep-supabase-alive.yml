@@ -2,9 +2,11 @@ name: Keep Supabase Active
 
 on:
   schedule:
-    # Run every 5 days at 10:00 AM UTC
+    # Run every Monday and Thursday at 10:00 AM UTC (max 4 days apart)
     # Supabase Free tier pauses after 7 days of inactivity
-    - cron: '0 10 */5 * *'
+    # NOTE: */N day-of-month cron does NOT work reliably - gaps at month
+    # boundaries can exceed 7 days (e.g. Jan 30 → Feb 5 = 6+ days)
+    - cron: '0 10 * * 1,4'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
