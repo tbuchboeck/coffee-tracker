@@ -2,9 +2,9 @@ name: Keep Supabase Active
 
 on:
   schedule:
-    # Run every 6 days at 10:00 AM UTC
-    # Supabase Free tier pauses after ~7 days of inactivity
-    - cron: '0 10 */6 * *'
+    # Run every 5 days at 10:00 AM UTC
+    # Supabase Free tier pauses after 7 days of inactivity
+    - cron: '0 10 */5 * *'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
@@ -12,21 +12,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Supabase Database
+        env:
+          SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
         run: |
           echo "Pinging Supabase to keep project active..."
 
-          # Make a simple SELECT query to keep the database active
-          curl -X POST \
-            "${{ secrets.REACT_APP_SUPABASE_URL }}/rest/v1/coffees?select=id&limit=1" \
-            -H "apikey: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}" \
-            -H "Content-Type: application/json" \
-            --fail-with-body || echo "Ping failed, but that's ok - project might be paused"
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
+            echo "❌ ERROR: GitHub Secrets not configured!"
+            echo "Add REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY"
+            echo "in your repo Settings → Secrets and variables → Actions"
+            exit 1
+          fi
 
-          echo "✅ Ping completed at $(date)"
+          # Simple GET request to read one row - keeps the database active
+          HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
+            "${SUPABASE_URL}/rest/v1/coffees?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}")
 
-      - name: Report Status
-        if: always()
-        run: |
-          echo "Keep-alive workflow completed"
-          echo "Next run will be in approximately 6 days"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Ping successful (HTTP $HTTP_STATUS) at $(date)"
+          else
+            echo "⚠️ Ping returned HTTP $HTTP_STATUS"
+            cat /tmp/response.txt
+            echo ""
+            echo "The project might be paused. Restore it at https://supabase.com/dashboard"
+            exit 1
+          fi
