@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Coffee, Star, Search, Trash2, Edit3, Calendar, Percent, ExternalLink, BarChart3, Moon, Sun, Download, Upload, FileText, RefreshCw, RotateCcw, Copy, ChevronDown, ChevronUp, Check, Cloud, CloudOff, Database } from 'lucide-react';
+import { Plus, Coffee, Star, Search, Trash2, Edit3, Calendar, Percent, ExternalLink, BarChart3, Moon, Sun, Download, Upload, FileText, RefreshCw, RotateCcw, Copy, ChevronDown, ChevronUp, Check, Cloud, CloudOff, Database, Lock } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
 import { personalCoffees } from './personal_coffees';
 import { coffeeService } from './services/coffeeService';
-// Auth disabled: import { authService } from './services/authService';
-// Auth disabled: import Login from './components/Login';
+import { pinService } from './services/pinService';
+import PinScreen from './components/PinScreen';
 
 // Personal coffee collection - your complete 30 coffee database
 const defaultCoffees = personalCoffees;
@@ -33,8 +33,7 @@ const CoffeeTracker = () => {
     error: null
   });
   const [showMigrationModal, setShowMigrationModal] = useState(false);
-  const [user, setUser] = useState(null);
-  const [authChecking, setAuthChecking] = useState(false); // Disabled auth check
+  const [pinVerified, setPinVerified] = useState(() => pinService.isSessionValid());
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
 
@@ -96,23 +95,14 @@ const CoffeeTracker = () => {
   // Data version for migration management
   const DATA_VERSION = '2.1';
 
-  // Authentication disabled - using localStorage mode only
-  // Check authentication status on mount
+  // Check if PIN session is still valid on mount
   useEffect(() => {
-    // Skip auth check - always use localStorage mode
-    setAuthChecking(false);
-    setUser(null);
-
-    // No auth state change listener needed
-    return () => {};
+    setPinVerified(pinService.isSessionValid());
   }, []);
 
   // Load data from database on mount
   useEffect(() => {
     const loadData = async () => {
-      // Skip cloud/auth checks - always use localStorage
-      // (Auth is disabled)
-
       setIsLoading(true);
       try {
         const data = await coffeeService.getAllCoffees();
@@ -166,7 +156,7 @@ const CoffeeTracker = () => {
     }
 
     loadData();
-  }, [user, authChecking]); // Reload when user changes
+  }, [pinVerified]); // Reload when PIN is verified
 
   // Note: Data is now saved immediately on each operation via coffeeService
   // No need for auto-save useEffect anymore
@@ -1044,23 +1034,11 @@ const CoffeeTracker = () => {
     }
   };
 
-  // Auth disabled - handleSignOut removed
-  // const handleSignOut = async () => {
-  //   if (window.confirm('Are you sure you want to sign out?')) {
-  //     const result = await authService.signOut();
-  //     if (result.success) {
-  //       setUser(null);
-  //       setCoffees([]);
-  //     } else {
-  //       alert('Failed to sign out: ' + result.error);
-  //     }
-  //   }
-  // };
-
-  // Auth disabled - handleLogin removed
-  // const handleLogin = (loggedInUser) => {
-  //   setUser(loggedInUser);
-  // };
+  const handleLock = () => {
+    pinService.clearSession();
+    setPinVerified(false);
+    setCoffees([]);
+  };
 
   // Check localStorage usage
   const getStorageInfo = () => {
@@ -1691,20 +1669,10 @@ const CoffeeTracker = () => {
     return null;
   };
 
-  // Show loading while checking authentication
-  if (authChecking) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center">
-        <div className="text-center">
-          <Coffee className="w-16 h-16 text-amber-600 mx-auto mb-4 animate-pulse" />
-          <p className="text-gray-600 text-lg">Loading...</p>
-        </div>
-      </div>
-    );
+  // Show PIN screen if not verified
+  if (!pinVerified) {
+    return <PinScreen onUnlock={() => setPinVerified(true)} />;
   }
-
-  // Login disabled - always use localStorage mode
-  // (Authentication is completely disabled)
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-amber-50 to-orange-100'} p-4 transition-colors`}>
@@ -1750,7 +1718,13 @@ const CoffeeTracker = () => {
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
-              {/* Auth disabled - Sign Out Button removed */}
+              <button
+                onClick={handleLock}
+                className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} transition-colors`}
+                title="Sperren"
+              >
+                <Lock className="w-5 h-5" />
+              </button>
               <button
                 onClick={handleExport}
                 className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'} transition-colors`}

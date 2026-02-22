@@ -15,7 +15,6 @@ const TABLE_NAME = 'coffees';
  */
 const COLUMN_MAPPING = {
   'id': 'id',
-  'user_id': 'user_id',
   'cuppingtime': 'cuppingTime',
   'roaster': 'roaster',
   'description': 'description',
@@ -109,7 +108,7 @@ const toCamelCaseKeys = (obj) => {
  */
 class CoffeeService {
   constructor() {
-    // Use cloud storage if Supabase is configured (auth disabled, no user filtering)
+    // Use cloud storage if Supabase is configured
     this.useCloud = isSupabaseConfigured();
     // Tracks whether the last fetch fell back from Supabase to local data
     this.lastFetchWasFallback = false;
@@ -146,7 +145,6 @@ class CoffeeService {
 
     if (this.useCloud) {
       try {
-        // Auth disabled - get all coffees without user filtering
         const { data, error } = await supabase
           .from(TABLE_NAME)
           .select('*')
@@ -177,7 +175,6 @@ class CoffeeService {
   async addCoffee(coffee) {
     if (this.useCloud) {
       try {
-        // Auth disabled - no user_id needed
         // Convert camelCase to lowercase for PostgreSQL
         const coffeeForDb = toLowerCaseKeys(coffee);
 
@@ -253,8 +250,7 @@ class CoffeeService {
   async saveAllCoffees(coffees) {
     if (this.useCloud) {
       try {
-        // Auth disabled - delete all and insert new (no user filtering)
-        // WARNING: This will replace ALL coffees in the database
+        // Replace all coffees in the database
         const { error: deleteError } = await supabase
           .from(TABLE_NAME)
           .delete()
@@ -293,7 +289,6 @@ class CoffeeService {
     }
 
     try {
-      // Auth disabled - no user needed
       // Get data from localStorage
       const localData = this._getFromLocalStorage();
 
