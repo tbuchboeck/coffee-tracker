@@ -317,7 +317,7 @@ const CoffeeTracker = () => {
     roaster: '', description: '', favorite: false, grinded: false,
     grindingTime: '', grindingDegree: '', coffeeAmount: '', servings: '',
     percentArabica: 100, percentRobusta: 0, cremaRating: 0, tasteRating: 0,
-    tasteNotes: '', url: '', comment: '', origin: '', roastLevel: 'medium',
+    tasteNotes: '', url: '', imageUrl: '', comment: '', origin: '', roastLevel: 'medium',
     brewingMethod: 'espresso', recommendedMethod: 'espresso',
     price: '', packageSize: 1000, currency: 'EUR', preparationNotes: '', coffeeGroup: ''
   });
@@ -327,7 +327,7 @@ const CoffeeTracker = () => {
       roaster: '', description: '', favorite: false, grinded: false,
       grindingTime: '', grindingDegree: '', coffeeAmount: '', servings: '',
       percentArabica: 100, percentRobusta: 0, cremaRating: 0, tasteRating: 0,
-      tasteNotes: '', url: '', comment: '', origin: '', roastLevel: 'medium',
+      tasteNotes: '', url: '', imageUrl: '', comment: '', origin: '', roastLevel: 'medium',
       brewingMethod: 'espresso', recommendedMethod: 'espresso',
       price: '', packageSize: 1000, currency: 'EUR', preparationNotes: '', coffeeGroup: ''
     });
@@ -351,6 +351,7 @@ const CoffeeTracker = () => {
         tasteRating: parseInt(formData.tasteRating),
         tasteNotes: formData.tasteNotes || '',
         url: formData.url || '',
+        imageUrl: formData.imageUrl || '',
         equipmentId: editingCoffee ? (editingCoffee.equipmentId || activeEquipment?.id || null) : (activeEquipment?.id || null)
       };
 
@@ -392,6 +393,7 @@ const CoffeeTracker = () => {
       percentArabica: coffee.percentArabica, percentRobusta: coffee.percentRobusta,
       cremaRating: coffee.cremaRating, tasteRating: coffee.tasteRating,
       tasteNotes: coffee.tasteNotes || '', url: coffee.url || '',
+      imageUrl: coffee.imageUrl || '',
       comment: coffee.comment || '', origin: coffee.origin || '',
       roastLevel: coffee.roastLevel || 'medium',
       brewingMethod: coffee.brewingMethod || 'espresso',
@@ -452,6 +454,7 @@ const CoffeeTracker = () => {
         percentArabica: newCoffee.percentArabica, percentRobusta: newCoffee.percentRobusta,
         cremaRating: newCoffee.cremaRating, tasteRating: newCoffee.tasteRating,
         tasteNotes: newCoffee.tasteNotes || '', url: newCoffee.url || '',
+        imageUrl: newCoffee.imageUrl || '',
         comment: newCoffee.comment || '', origin: newCoffee.origin || '',
         roastLevel: newCoffee.roastLevel || 'medium',
         brewingMethod: newCoffee.brewingMethod || 'espresso',
@@ -983,7 +986,7 @@ const CoffeeTracker = () => {
                       {analytics.blendData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.fill} />))}
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
-                    <Legend verticalAlign="bottom" height={36} formatter={(value, entry) => `${value}: ${entry.payload.value}%`} />
+                    <Legend verticalAlign="bottom" height={36} formatter={(value, entry) => `${value}: ${entry.payload.value}%`} wrapperStyle={{ color: darkMode ? '#d1d5db' : '#374151' }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -998,7 +1001,7 @@ const CoffeeTracker = () => {
                     <YAxis domain={[0, 5]} stroke={darkMode ? '#9ca3af' : '#6b7280'} />
                     <Tooltip content={<CustomTooltip />} />
                     <Line type="monotone" dataKey="rating" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4, fill: '#f59e0b' }} name="Taste Rating" />
-                    <Line type="monotone" dataKey="crema" stroke="#8b4513" strokeWidth={2} dot={{ r: 4, fill: '#8b4513' }} name="Crema Rating" />
+                    <Line type="monotone" dataKey="crema" stroke={darkMode ? '#d4a574' : '#8b4513'} strokeWidth={2} dot={{ r: 4, fill: darkMode ? '#d4a574' : '#8b4513' }} name="Crema Rating" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -1022,7 +1025,7 @@ const CoffeeTracker = () => {
                 <h3 className="text-lg font-semibold mb-4">Roast Level Distribution</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
-                    <Pie data={analytics.roastLevelData} cx="50%" cy="50%" labelLine={false} label={({ level, count }) => `${level}: ${count}`} outerRadius={80} dataKey="count">
+                    <Pie data={analytics.roastLevelData} cx="50%" cy="50%" labelLine={false} label={({ level, count, x, y }) => (<text x={x} y={y} fill={darkMode ? '#e5e7eb' : '#374151'} textAnchor="middle" dominantBaseline="central" fontSize={12}>{`${level}: ${count}`}</text>)} outerRadius={80} dataKey="count">
                       {analytics.roastLevelData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.fill} />))}
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
@@ -1035,13 +1038,13 @@ const CoffeeTracker = () => {
                 <div className="lg:col-span-2">
                   <h3 className="text-lg font-semibold mb-4">Cost Analysis</h3>
                   <p className={`text-sm mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                    Average cost per cup: <span className="font-bold text-green-600">{analytics.avgCostPerCup} EUR</span>
+                    Average cost per cup: <span className={`font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{analytics.avgCostPerCup} EUR</span>
                   </p>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={analytics.priceAnalysis.slice(0, 10)} margin={{ top: 20, right: 30, left: 80, bottom: 80 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#374151' : '#e5e7eb'} />
                       <XAxis dataKey="name" stroke={darkMode ? '#9ca3af' : '#6b7280'} angle={-45} textAnchor="end" height={80} interval={0} fontSize={12} />
-                      <YAxis stroke={darkMode ? '#9ca3af' : '#6b7280'} label={{ value: 'Cost per Cup (EUR)', angle: -90, position: 'insideLeft', offset: 10 }} />
+                      <YAxis stroke={darkMode ? '#9ca3af' : '#6b7280'} label={{ value: 'Cost per Cup (EUR)', angle: -90, position: 'insideLeft', offset: 10, fill: darkMode ? '#d1d5db' : '#374151' }} />
                       <Tooltip content={({ active, payload, label }) => {
                         if (active && payload && payload.length) {
                           const data = payload[0].payload;
@@ -1050,7 +1053,7 @@ const CoffeeTracker = () => {
                               <p className={`${darkMode ? 'text-white' : 'text-gray-900'} font-medium`}>{label}</p>
                               <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{data.coffee}</p>
                               <p style={{ color: payload[0].color }}>Cost: {data.costPerCup.toFixed(3)} EUR/cup</p>
-                              <p className="text-sm text-gray-500">Taste: {data.tasteRating}/5 | Value: {data.valueScore}</p>
+                              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Taste: {data.tasteRating}/5 | Value: {data.valueScore}</p>
                             </div>
                           );
                         }
@@ -1070,24 +1073,24 @@ const CoffeeTracker = () => {
                     <BarChart data={analytics.grindByBrandData} margin={{ top: 20, right: 30, left: 60, bottom: 80 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#374151' : '#e5e7eb'} />
                       <XAxis dataKey="brand" stroke={darkMode ? '#9ca3af' : '#6b7280'} angle={-45} textAnchor="end" height={80} interval={0} fontSize={12} />
-                      <YAxis stroke={darkMode ? '#9ca3af' : '#6b7280'} label={{ value: 'Grind Level', angle: -90, position: 'insideLeft' }} />
+                      <YAxis stroke={darkMode ? '#9ca3af' : '#6b7280'} label={{ value: 'Grind Level', angle: -90, position: 'insideLeft', fill: darkMode ? '#d1d5db' : '#374151' }} />
                       <Tooltip content={({ active, payload, label }) => {
                         if (active && payload && payload.length) {
                           return (
                             <div className={`${darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-200'} p-3 rounded-lg shadow-lg border`}>
                               <p className={`${darkMode ? 'text-white' : 'text-gray-900'} font-medium`}>{label}</p>
                               <p style={{ color: payload[0].color }}>Average Grind: {payload[0].value}</p>
-                              <p className="text-sm text-gray-500">{payload[0].payload.count} coffee{payload[0].payload.count !== 1 ? 's' : ''}</p>
+                              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{payload[0].payload.count} coffee{payload[0].payload.count !== 1 ? 's' : ''}</p>
                             </div>
                           );
                         }
                         return null;
                       }} />
-                      <Bar dataKey="avgGrind" fill="#8b4513" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="avgGrind" fill={darkMode ? '#d4a574' : '#8b4513'} radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="text-center py-8 text-gray-500">No grind data available</div>
+                  <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No grind data available</div>
                 )}
               </div>
             </div>
@@ -1117,7 +1120,7 @@ const CoffeeTracker = () => {
           <div className="flex flex-col gap-3">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="flex-1 relative">
-                <Search className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+                <Search className={`w-5 h-5 absolute left-3 top-3 ${darkMode ? 'text-gray-300' : 'text-gray-400'}`} />
                 <input
                   type="text"
                   placeholder="Search roaster, description, taste notes, comments..."
@@ -1426,6 +1429,10 @@ const CoffeeTracker = () => {
                   <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Product URL</label>
                   <input type="url" placeholder="https://..." value={formData.url} onChange={(e) => setFormData({...formData, url: e.target.value})} className={inputClass} />
                 </div>
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Product Image URL</label>
+                  <input type="url" placeholder="Product image URL" value={formData.imageUrl} onChange={(e) => setFormData({...formData, imageUrl: e.target.value})} className={inputClass} />
+                </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Price</label>
@@ -1713,12 +1720,16 @@ const CoffeeTracker = () => {
 
 // ==================== COFFEE CARD COMPONENT ====================
 const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorite, onDuplicate, onShowRadar, brewingMethods, countryFlags, getRoastBadge, calculateCostPerCup, calculateValueScore, equipmentName }) => {
+  const [imgError, setImgError] = React.useState(false);
   const roastBadge = getRoastBadge(coffee.roastLevel);
   const cost = calculateCostPerCup(coffee);
   const valueScore = calculateValueScore(coffee);
 
   return (
     <div className={`${darkMode ? 'glass-card-dark' : 'glass-card'} rounded-2xl shadow-xl p-4 md:p-6 card-hover transition-all`}>
+      {coffee.imageUrl && !imgError && (
+        <img src={coffee.imageUrl} alt={coffee.description} className="w-full h-40 object-cover rounded-xl mb-3" loading="lazy" referrerPolicy="no-referrer" onError={() => setImgError(true)} />
+      )}
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-2 flex-wrap gap-y-1 mb-3">
@@ -1743,21 +1754,21 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
             <div className="flex items-center space-x-2">
-              <Percent className="w-4 h-4 text-gray-500" />
+              <Percent className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               <span className="text-sm">{coffee.percentArabica}% Arabica / {coffee.percentRobusta}% Robusta</span>
             </div>
             {(coffee.grindingDegree || coffee.coffeeAmount) && (
               <div className="flex items-center space-x-2 flex-wrap">
-                {coffee.grindingDegree && <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Grinder: {coffee.grindingDegree}</span>}
-                {coffee.coffeeAmount && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{coffee.coffeeAmount}g{coffee.servings && coffee.brewingMethod === 'coldbrew' ? ` (${coffee.servings} srv)` : ''}</span>}
+                {coffee.grindingDegree && <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-orange-900/50 text-orange-200' : 'bg-orange-100 text-orange-800'}`}>Grinder: {coffee.grindingDegree}</span>}
+                {coffee.coffeeAmount && <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-blue-900/50 text-blue-200' : 'bg-blue-100 text-blue-800'}`}>{coffee.coffeeAmount}g{coffee.servings && coffee.brewingMethod === 'coldbrew' ? ` (${coffee.servings} srv)` : ''}</span>}
               </div>
             )}
             <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4 text-gray-500" />
+              <Calendar className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               <span className="text-sm">{new Date(coffee.cuppingTime).toLocaleDateString()}</span>
             </div>
             {coffee.price && (
-              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded inline-block">
+              <span className={`text-xs px-2 py-1 rounded inline-block ${darkMode ? 'bg-green-900/50 text-green-200' : 'bg-green-100 text-green-800'}`}>
                 {coffee.price} {coffee.currency || 'EUR'} / {coffee.packageSize || 1000}g
               </span>
             )}
@@ -1774,7 +1785,7 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
                     {country && !isRegion ? (
                       <><span className="text-xl">{country.flag}</span><span className="text-xs ml-1">{tc}</span></>
                     ) : (
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">{country ? country.name : tc}</span>
+                      <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-green-900/50 text-green-200' : 'bg-green-100 text-green-800'}`}>{country ? country.name : tc}</span>
                     )}
                   </span>
                 );
@@ -1809,7 +1820,7 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
             {cost && (
               <div>
                 <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Cost/Cup</span>
-                <span className="font-bold text-green-600" title={cost.batchInfo || `${cost.gramsUsed}g`}>{cost.costPerCup} {cost.currency}</span>
+                <span className={`font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`} title={cost.batchInfo || `${cost.gramsUsed}g`}>{cost.costPerCup} {cost.currency}</span>
                 {valueScore && <span className={`text-xs block ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Value: {valueScore}</span>}
               </div>
             )}
@@ -1819,8 +1830,8 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
             <div className="space-y-1">
               {coffee.url && (
                 <div className="flex items-center space-x-2">
-                  <ExternalLink className="w-4 h-4 text-blue-600" />
-                  <a href={coffee.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">Product Link</a>
+                  <ExternalLink className={`w-4 h-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <a href={coffee.url} target="_blank" rel="noopener noreferrer" className={`hover:underline text-sm ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>Product Link</a>
                 </div>
               )}
               {coffee.comment && <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} italic`}>"{coffee.comment}"</p>}
