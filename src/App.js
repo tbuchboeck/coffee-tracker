@@ -1025,7 +1025,7 @@ const CoffeeTracker = () => {
                 <h3 className="text-lg font-semibold mb-4">Roast Level Distribution</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
-                    <Pie data={analytics.roastLevelData} cx="50%" cy="50%" labelLine={false} label={({ level, count }) => `${level}: ${count}`} outerRadius={80} dataKey="count" style={{ fill: darkMode ? '#e5e7eb' : '#374151' }}>
+                    <Pie data={analytics.roastLevelData} cx="50%" cy="50%" labelLine={false} label={({ level, count, x, y }) => (<text x={x} y={y} fill={darkMode ? '#e5e7eb' : '#374151'} textAnchor="middle" dominantBaseline="central" fontSize={12}>{`${level}: ${count}`}</text>)} outerRadius={80} dataKey="count">
                       {analytics.roastLevelData.map((entry, index) => (<Cell key={`cell-${index}`} fill={entry.fill} />))}
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
@@ -1720,14 +1720,15 @@ const CoffeeTracker = () => {
 
 // ==================== COFFEE CARD COMPONENT ====================
 const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorite, onDuplicate, onShowRadar, brewingMethods, countryFlags, getRoastBadge, calculateCostPerCup, calculateValueScore, equipmentName }) => {
+  const [imgError, setImgError] = React.useState(false);
   const roastBadge = getRoastBadge(coffee.roastLevel);
   const cost = calculateCostPerCup(coffee);
   const valueScore = calculateValueScore(coffee);
 
   return (
     <div className={`${darkMode ? 'glass-card-dark' : 'glass-card'} rounded-2xl shadow-xl p-4 md:p-6 card-hover transition-all`}>
-      {coffee.imageUrl && (
-        <img src={coffee.imageUrl} alt={coffee.description} className="w-full h-40 object-cover rounded-xl mb-3" loading="lazy" onError={(e) => e.target.style.display = 'none'} />
+      {coffee.imageUrl && !imgError && (
+        <img src={coffee.imageUrl} alt={coffee.description} className="w-full h-40 object-cover rounded-xl mb-3" loading="lazy" referrerPolicy="no-referrer" onError={() => setImgError(true)} />
       )}
       <div className="flex items-start justify-between">
         <div className="flex-1">
