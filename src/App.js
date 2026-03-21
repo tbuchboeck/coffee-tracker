@@ -317,7 +317,7 @@ const CoffeeTracker = () => {
     roaster: '', description: '', favorite: false, grinded: false,
     grindingTime: '', grindingDegree: '', coffeeAmount: '', servings: '',
     percentArabica: 100, percentRobusta: 0, cremaRating: 0, tasteRating: 0,
-    tasteNotes: '', url: '', comment: '', origin: '', roastLevel: 'medium',
+    tasteNotes: '', url: '', imageUrl: '', comment: '', origin: '', roastLevel: 'medium',
     brewingMethod: 'espresso', recommendedMethod: 'espresso',
     price: '', packageSize: 1000, currency: 'EUR', preparationNotes: '', coffeeGroup: ''
   });
@@ -327,7 +327,7 @@ const CoffeeTracker = () => {
       roaster: '', description: '', favorite: false, grinded: false,
       grindingTime: '', grindingDegree: '', coffeeAmount: '', servings: '',
       percentArabica: 100, percentRobusta: 0, cremaRating: 0, tasteRating: 0,
-      tasteNotes: '', url: '', comment: '', origin: '', roastLevel: 'medium',
+      tasteNotes: '', url: '', imageUrl: '', comment: '', origin: '', roastLevel: 'medium',
       brewingMethod: 'espresso', recommendedMethod: 'espresso',
       price: '', packageSize: 1000, currency: 'EUR', preparationNotes: '', coffeeGroup: ''
     });
@@ -351,6 +351,7 @@ const CoffeeTracker = () => {
         tasteRating: parseInt(formData.tasteRating),
         tasteNotes: formData.tasteNotes || '',
         url: formData.url || '',
+        imageUrl: formData.imageUrl || '',
         equipmentId: editingCoffee ? (editingCoffee.equipmentId || activeEquipment?.id || null) : (activeEquipment?.id || null)
       };
 
@@ -392,6 +393,7 @@ const CoffeeTracker = () => {
       percentArabica: coffee.percentArabica, percentRobusta: coffee.percentRobusta,
       cremaRating: coffee.cremaRating, tasteRating: coffee.tasteRating,
       tasteNotes: coffee.tasteNotes || '', url: coffee.url || '',
+      imageUrl: coffee.imageUrl || '',
       comment: coffee.comment || '', origin: coffee.origin || '',
       roastLevel: coffee.roastLevel || 'medium',
       brewingMethod: coffee.brewingMethod || 'espresso',
@@ -452,6 +454,7 @@ const CoffeeTracker = () => {
         percentArabica: newCoffee.percentArabica, percentRobusta: newCoffee.percentRobusta,
         cremaRating: newCoffee.cremaRating, tasteRating: newCoffee.tasteRating,
         tasteNotes: newCoffee.tasteNotes || '', url: newCoffee.url || '',
+        imageUrl: newCoffee.imageUrl || '',
         comment: newCoffee.comment || '', origin: newCoffee.origin || '',
         roastLevel: newCoffee.roastLevel || 'medium',
         brewingMethod: newCoffee.brewingMethod || 'espresso',
@@ -1426,6 +1429,10 @@ const CoffeeTracker = () => {
                   <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Product URL</label>
                   <input type="url" placeholder="https://..." value={formData.url} onChange={(e) => setFormData({...formData, url: e.target.value})} className={inputClass} />
                 </div>
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Product Image URL</label>
+                  <input type="url" placeholder="Product image URL" value={formData.imageUrl} onChange={(e) => setFormData({...formData, imageUrl: e.target.value})} className={inputClass} />
+                </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>Price</label>
@@ -1719,6 +1726,9 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
 
   return (
     <div className={`${darkMode ? 'glass-card-dark' : 'glass-card'} rounded-2xl shadow-xl p-4 md:p-6 card-hover transition-all`}>
+      {coffee.imageUrl && (
+        <img src={coffee.imageUrl} alt={coffee.description} className="w-full h-40 object-cover rounded-xl mb-3" loading="lazy" onError={(e) => e.target.style.display = 'none'} />
+      )}
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-2 flex-wrap gap-y-1 mb-3">

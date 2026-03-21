@@ -27,6 +27,7 @@ const COLUMN_MAPPING = {
   'recommendedmethod': 'recommendedMethod',
   'grinded': 'grinded',
   'grindingtime': 'grindingTime',
+  'imageurl': 'imageUrl',
   'grindingdegree': 'grindingDegree',
   'preparationnotes': 'preparationNotes',
   'coffeeamount': 'coffeeAmount',
