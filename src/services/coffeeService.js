@@ -40,6 +40,7 @@ const COLUMN_MAPPING = {
   'packagesize': 'packageSize',
   'currency': 'currency',
   'coffeegroup': 'coffeeGroup',
+  'equipmentid': 'equipmentId',
   'created_at': 'created_at'
 };
 
