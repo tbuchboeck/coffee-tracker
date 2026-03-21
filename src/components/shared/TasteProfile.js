@@ -54,7 +54,7 @@ const TasteProfile = ({ value, onChange, darkMode }) => {
               </span>
               <span className={`text-xs px-2 py-1 rounded ${
                 tasteProfile[attribute.id] > 0
-                  ? 'bg-amber-100 text-amber-800'
+                  ? darkMode ? 'bg-amber-900/50 text-amber-300' : 'bg-amber-100 text-amber-800'
                   : darkMode ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600'
               }`}>
                 {tasteProfile[attribute.id] || 0}
@@ -66,9 +66,9 @@ const TasteProfile = ({ value, onChange, darkMode }) => {
               max="5"
               value={tasteProfile[attribute.id] || 0}
               onChange={(e) => updateTasteRating(attribute.id, parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
+              className={`w-full h-2 rounded-lg appearance-none cursor-pointer accent-amber-600 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'}`}
             />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <div className={`flex justify-between text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               <span>0</span>
               <span>5</span>
             </div>

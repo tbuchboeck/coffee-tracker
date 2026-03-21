@@ -88,9 +88,9 @@ const ComboBox = ({ value, onChange, options, placeholder, type = 'text', darkMo
                 key={index}
                 type="button"
                 onClick={() => handleOptionSelect(option)}
-                className={`w-full px-4 py-2 text-left hover:${
-                  darkMode ? 'bg-gray-600' : 'bg-gray-100'
-                } flex items-center justify-between transition-colors`}
+                className={`w-full px-4 py-2 text-left flex items-center justify-between transition-colors ${
+                  darkMode ? 'text-white hover:bg-gray-600' : 'text-gray-900 hover:bg-gray-100'
+                }`}
               >
                 <span className="truncate">
                   {type === 'country' ? formatCountryDisplay(option) : option}

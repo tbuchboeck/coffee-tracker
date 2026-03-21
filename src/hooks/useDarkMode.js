@@ -8,6 +8,8 @@ const useDarkMode = () => {
 
   useEffect(() => {
     localStorage.setItem('coffeeTrackerDarkMode', JSON.stringify(darkMode));
+    // Toggle Tailwind's dark class on <html> so dark: variants work
+    document.documentElement.classList.toggle('dark', darkMode);
   }, [darkMode]);
 
   const toggleDarkMode = () => setDarkMode(prev => !prev);
