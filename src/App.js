@@ -1726,7 +1726,7 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
   const valueScore = calculateValueScore(coffee);
 
   return (
-    <div className={`${darkMode ? 'glass-card-dark' : 'glass-card'} rounded-2xl shadow-xl p-4 md:p-6 card-hover transition-all`}>
+    <div className={`${darkMode ? 'glass-card-dark text-white' : 'glass-card text-gray-900'} rounded-2xl shadow-xl p-4 md:p-6 card-hover transition-all`}>
       {coffee.imageUrl && !imgError && (
         <img src={coffee.imageUrl} alt={coffee.description} className="w-full h-40 object-cover rounded-xl mb-3" loading="lazy" referrerPolicy="no-referrer" onError={() => setImgError(true)} />
       )}
