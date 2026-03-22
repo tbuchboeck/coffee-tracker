@@ -1831,7 +1831,7 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
             </div>
           )}
 
-          <div className="flex items-center space-x-4 sm:space-x-6 mb-3 flex-wrap">
+          <div className="flex items-center space-x-4 sm:space-x-6 mb-2 flex-wrap">
             <div>
               <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Crema</span>
               <StarRating rating={coffee.cremaRating} readOnly darkMode={darkMode} />
@@ -1840,20 +1840,31 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
               <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Taste</span>
               <StarRating rating={coffee.tasteRating} readOnly darkMode={darkMode} />
             </div>
-            {cost && (
-              <div>
-                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Cost/Cup</span>
-                <span className={`font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`} title={cost.batchInfo || `${cost.gramsUsed}g`}>{cost.costPerCup} {cost.currency}</span>
-              </div>
-            )}
-            {valueScore && (
-              <div className={`px-3 py-1 rounded-lg border ${getEfficiencyBgColor(valueScore, darkMode)}`}>
-                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Efficiency</span>
-                <span className={`font-bold text-lg ${getEfficiencyColor(valueScore, darkMode)}`}>{valueScore}</span>
-                <span className={`text-xs block ${getEfficiencyColor(valueScore, darkMode)}`}>{getEfficiencyLabel(valueScore)}</span>
-              </div>
-            )}
           </div>
+
+          {(cost || valueScore) && (
+            <div className={`flex items-center gap-3 mb-3 px-3 py-2 rounded-xl flex-wrap ${darkMode ? 'bg-gray-800/60' : 'bg-gray-50'}`}>
+              {cost && (
+                <div className="flex items-center gap-1.5" title={cost.batchInfo || `${cost.gramsUsed}g per cup`}>
+                  <span className={`text-xs font-medium uppercase tracking-wide ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Cost</span>
+                  <span className={`font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{cost.costPerCup} {cost.currency}</span>
+                </div>
+              )}
+              {valueScore && cost && <span className={`${darkMode ? 'text-gray-600' : 'text-gray-300'}`}>|</span>}
+              {valueScore && (
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-xs font-medium uppercase tracking-wide ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Efficiency</span>
+                  <span className={`font-bold ${getEfficiencyColor(valueScore, darkMode)}`}>{valueScore}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${getEfficiencyBgColor(valueScore, darkMode)} ${getEfficiencyColor(valueScore, darkMode)}`}>{getEfficiencyLabel(valueScore)}</span>
+                </div>
+              )}
+              <span className={`${darkMode ? 'text-gray-600' : 'text-gray-300'}`}>|</span>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-xs font-medium uppercase tracking-wide ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Rating</span>
+                <span className={`font-bold ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>{coffee.tasteRating}/5</span>
+              </div>
+            </div>
+          )}
 
           {(coffee.comment || coffee.url) && (
             <div className="space-y-1">
