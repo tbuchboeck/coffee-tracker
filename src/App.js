@@ -29,8 +29,8 @@ const CoffeeTracker = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingCoffee, setEditingCoffee] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterFavorites, setFilterFavorites] = useState(false);
-  const [sortBy, setSortBy] = useState('date');
+  const [filterFavorites, setFilterFavorites] = useState(true);
+  const [sortBy, setSortBy] = useState('value');
   const [darkMode, toggleDarkMode] = useDarkMode();
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [selectedCoffeeForRadar, setSelectedCoffeeForRadar] = useState(null);
