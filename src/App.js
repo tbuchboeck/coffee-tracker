@@ -219,6 +219,27 @@ const CoffeeTracker = () => {
     return (coffee.tasteRating / parseFloat(cost.costPerCup)).toFixed(1);
   };
 
+  const getEfficiencyColor = (score, darkMode) => {
+    const val = parseFloat(score);
+    if (val >= 8) return darkMode ? 'text-green-400' : 'text-green-600';
+    if (val >= 5) return darkMode ? 'text-yellow-400' : 'text-yellow-600';
+    return darkMode ? 'text-red-400' : 'text-red-600';
+  };
+
+  const getEfficiencyBgColor = (score, darkMode) => {
+    const val = parseFloat(score);
+    if (val >= 8) return darkMode ? 'bg-green-900/40 border-green-700' : 'bg-green-50 border-green-300';
+    if (val >= 5) return darkMode ? 'bg-yellow-900/40 border-yellow-700' : 'bg-yellow-50 border-yellow-300';
+    return darkMode ? 'bg-red-900/40 border-red-700' : 'bg-red-50 border-red-300';
+  };
+
+  const getEfficiencyLabel = (score) => {
+    const val = parseFloat(score);
+    if (val >= 8) return 'Top Deal';
+    if (val >= 5) return 'Fair';
+    return 'Overpriced';
+  };
+
   // Analytics
   const getAnalyticsData = () => {
     const roasterCounts = coffees.reduce((acc, coffee) => {
@@ -955,10 +976,10 @@ const CoffeeTracker = () => {
 
             <div className={`${darkMode ? 'bg-gray-700/50' : 'bg-amber-50/80'} p-4 rounded-xl mb-6 border-l-4 border-amber-500`}>
               <h3 className="text-lg font-semibold mb-2 flex items-center">
-                <span className="text-amber-600 mr-2">Value Score Explained</span>
+                <span className="text-amber-600 mr-2">Efficiency Score Explained</span>
               </h3>
               <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                <strong>Value Score = Taste Rating / Cost per Cup</strong> — Higher scores mean better value. Scores above 5 are generally good value.
+                <strong>Efficiency = Taste Rating / Cost per Cup</strong> — How much flavor you get per euro. <span className="text-green-600 font-medium">≥8 = Top Deal</span>, <span className="text-yellow-600 font-medium">5–8 = Fair</span>, <span className="text-red-600 font-medium">&lt;5 = Overpriced</span>.
               </p>
             </div>
 
@@ -1053,7 +1074,7 @@ const CoffeeTracker = () => {
                               <p className={`${darkMode ? 'text-white' : 'text-gray-900'} font-medium`}>{label}</p>
                               <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{data.coffee}</p>
                               <p style={{ color: payload[0].color }}>Cost: {data.costPerCup.toFixed(3)} EUR/cup</p>
-                              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Taste: {data.tasteRating}/5 | Value: {data.valueScore}</p>
+                              <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Taste: {data.tasteRating}/5 | Efficiency: {data.valueScore}</p>
                             </div>
                           );
                         }
@@ -1149,7 +1170,7 @@ const CoffeeTracker = () => {
                   <option value="date">Sort by Date</option>
                   <option value="rating">Sort by Rating</option>
                   <option value="roaster">Sort by Roaster</option>
-                  <option value="value">Sort by Value</option>
+                  <option value="value">Sort by Efficiency</option>
                   <option value="priceLowHigh">Price (Low-High)</option>
                   <option value="priceHighLow">Price (High-Low)</option>
                 </select>
@@ -1534,6 +1555,7 @@ const CoffeeTracker = () => {
                     onShowRadar={setSelectedCoffeeForRadar} brewingMethods={brewingMethods}
                     countryFlags={countryFlags} getRoastBadge={getRoastBadge}
                     calculateCostPerCup={calculateCostPerCup} calculateValueScore={calculateValueScore}
+                    getEfficiencyColor={getEfficiencyColor} getEfficiencyBgColor={getEfficiencyBgColor} getEfficiencyLabel={getEfficiencyLabel}
                     equipmentName={getEquipmentName(coffee)} />
                 ));
               }
@@ -1613,6 +1635,7 @@ const CoffeeTracker = () => {
                             onShowRadar={setSelectedCoffeeForRadar} brewingMethods={brewingMethods}
                             countryFlags={countryFlags} getRoastBadge={getRoastBadge}
                             calculateCostPerCup={calculateCostPerCup} calculateValueScore={calculateValueScore}
+                            getEfficiencyColor={getEfficiencyColor} getEfficiencyBgColor={getEfficiencyBgColor} getEfficiencyLabel={getEfficiencyLabel}
                             equipmentName={getEquipmentName(coffee)} />
                         ))}
                       </div>
@@ -1719,7 +1742,7 @@ const CoffeeTracker = () => {
 };
 
 // ==================== COFFEE CARD COMPONENT ====================
-const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorite, onDuplicate, onShowRadar, brewingMethods, countryFlags, getRoastBadge, calculateCostPerCup, calculateValueScore, equipmentName }) => {
+const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorite, onDuplicate, onShowRadar, brewingMethods, countryFlags, getRoastBadge, calculateCostPerCup, calculateValueScore, getEfficiencyColor, getEfficiencyBgColor, getEfficiencyLabel, equipmentName }) => {
   const [imgError, setImgError] = React.useState(false);
   const roastBadge = getRoastBadge(coffee.roastLevel);
   const cost = calculateCostPerCup(coffee);
@@ -1821,7 +1844,13 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
               <div>
                 <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Cost/Cup</span>
                 <span className={`font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`} title={cost.batchInfo || `${cost.gramsUsed}g`}>{cost.costPerCup} {cost.currency}</span>
-                {valueScore && <span className={`text-xs block ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Value: {valueScore}</span>}
+              </div>
+            )}
+            {valueScore && (
+              <div className={`px-3 py-1 rounded-lg border ${getEfficiencyBgColor(valueScore, darkMode)}`}>
+                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} block`}>Efficiency</span>
+                <span className={`font-bold text-lg ${getEfficiencyColor(valueScore, darkMode)}`}>{valueScore}</span>
+                <span className={`text-xs block ${getEfficiencyColor(valueScore, darkMode)}`}>{getEfficiencyLabel(valueScore)}</span>
               </div>
             )}
           </div>
