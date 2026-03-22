@@ -1744,20 +1744,39 @@ const CoffeeTracker = () => {
 // ==================== COFFEE CARD COMPONENT ====================
 const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorite, onDuplicate, onShowRadar, brewingMethods, countryFlags, getRoastBadge, calculateCostPerCup, calculateValueScore, getEfficiencyColor, getEfficiencyBgColor, getEfficiencyLabel, equipmentName }) => {
   const [imgError, setImgError] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(false);
   const roastBadge = getRoastBadge(coffee.roastLevel);
   const cost = calculateCostPerCup(coffee);
   const valueScore = calculateValueScore(coffee);
 
+  const handleCardClick = (e) => {
+    // Don't toggle when clicking buttons, links, or interactive elements
+    if (e.target.closest('button') || e.target.closest('a')) return;
+    setExpanded(prev => !prev);
+  };
+
   return (
-    <div className={`${darkMode ? 'glass-card-dark text-white' : 'glass-card text-gray-900'} rounded-2xl shadow-xl p-4 md:p-6 card-hover transition-all`}>
+    <div
+      className={`${darkMode ? 'glass-card-dark text-white' : 'glass-card text-gray-900'} rounded-2xl shadow-xl p-4 md:p-6 card-hover transition-all cursor-pointer`}
+      onClick={handleCardClick}
+    >
+      {/* Image with name overlay (Enhancement 2) */}
       {coffee.imageUrl && !imgError && (
-        <img src={coffee.imageUrl} alt={coffee.description} className="w-full h-40 object-cover rounded-xl mb-3" loading="lazy" referrerPolicy="no-referrer" onError={() => setImgError(true)} />
+        <div className="relative mb-3">
+          <img src={coffee.imageUrl} alt={coffee.description} className="w-full h-48 object-contain rounded-xl" loading="lazy" referrerPolicy="no-referrer" onError={() => setImgError(true)} />
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent rounded-b-xl px-3 py-2">
+            <p className="text-white font-bold text-sm truncate">{coffee.roaster}</p>
+            <p className="text-white/80 text-xs truncate">{coffee.description}</p>
+          </div>
+        </div>
       )}
+
+      {/* === COMPACT VIEW (always visible) === */}
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <div className="flex items-center space-x-2 flex-wrap gap-y-1 mb-3">
+          {/* Roaster name + roast level badge + brewing method badge */}
+          <div className="flex items-center space-x-2 flex-wrap gap-y-1 mb-2">
             <h3 className="text-lg sm:text-xl font-bold break-words">{coffee.roaster}</h3>
-            {coffee.favorite && <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />}
             {coffee.roastLevel && (
               <span className={`text-xs px-2 py-1 rounded-full font-medium ${roastBadge.bg} ${roastBadge.text}`}>{roastBadge.label}</span>
             )}
@@ -1766,30 +1785,66 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
                 {brewingMethods.find(m => m.id === coffee.brewingMethod)?.icon} {brewingMethods.find(m => m.id === coffee.brewingMethod)?.name || coffee.brewingMethod}
               </span>
             )}
-            {equipmentName && (
-              <span className={`text-xs px-2 py-1 rounded-full font-medium ${darkMode ? 'bg-purple-900/50 text-purple-200' : 'bg-purple-100 text-purple-800'}`}>
-                <Settings className="w-3 h-3 inline mr-1" />{equipmentName}
+            {coffee.price && (
+              <span className={`text-xs px-2 py-1 rounded-full font-medium ${darkMode ? 'bg-green-900/50 text-green-200' : 'bg-green-100 text-green-800'}`}>
+                {coffee.price} {coffee.currency || 'EUR'}
               </span>
             )}
           </div>
 
+          {/* Star ratings inline compact */}
+          <div className="flex items-center space-x-4 flex-wrap gap-y-1 mb-1">
+            <div className="flex items-center space-x-1">
+              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Crema</span>
+              <StarRating rating={coffee.cremaRating} readOnly darkMode={darkMode} />
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Taste</span>
+              <StarRating rating={coffee.tasteRating} readOnly darkMode={darkMode} />
+            </div>
+          </div>
+        </div>
+
+        {/* Right side: favorite star + chevron toggle */}
+        <div className="flex flex-col items-center space-y-1 ml-3">
+          <button onClick={onToggleFavorite} className={`p-2 ${coffee.favorite ? 'text-yellow-400' : darkMode ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-400 hover:text-yellow-500'} transition-colors`}>
+            <Star className={`w-5 h-5 ${coffee.favorite ? 'fill-current' : ''}`} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setExpanded(prev => !prev); }}
+            className={`p-1 ${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-800'} transition-colors`}
+            title={expanded ? 'Collapse' : 'Expand'}
+          >
+            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
+
+      {/* === EXPANDED VIEW (toggle) === */}
+      {expanded && (
+        <div className="mt-3 border-t pt-3" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
+          {/* Description */}
           <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-3`}>{coffee.description}</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+            {/* Arabica / Robusta percentage */}
             <div className="flex items-center space-x-2">
               <Percent className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               <span className="text-sm">{coffee.percentArabica}% Arabica / {coffee.percentRobusta}% Robusta</span>
             </div>
+            {/* Grinder setting + coffee amount badges */}
             {(coffee.grindingDegree || coffee.coffeeAmount) && (
               <div className="flex items-center space-x-2 flex-wrap">
                 {coffee.grindingDegree && <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-orange-900/50 text-orange-200' : 'bg-orange-100 text-orange-800'}`}>Grinder: {coffee.grindingDegree}</span>}
                 {coffee.coffeeAmount && <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-blue-900/50 text-blue-200' : 'bg-blue-100 text-blue-800'}`}>{coffee.coffeeAmount}g{coffee.servings && coffee.brewingMethod === 'coldbrew' ? ` (${coffee.servings} srv)` : ''}</span>}
               </div>
             )}
+            {/* Date */}
             <div className="flex items-center space-x-2">
               <Calendar className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               <span className="text-sm">{new Date(coffee.cuppingTime).toLocaleDateString()}</span>
             </div>
+            {/* Price full detail */}
             {coffee.price && (
               <span className={`text-xs px-2 py-1 rounded inline-block ${darkMode ? 'bg-green-900/50 text-green-200' : 'bg-green-100 text-green-800'}`}>
                 {coffee.price} {coffee.currency || 'EUR'} / {coffee.packageSize || 1000}g
@@ -1797,6 +1852,7 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
             )}
           </div>
 
+          {/* Origin country flags */}
           {coffee.origin && (
             <div className="mb-3 flex flex-wrap items-center gap-1">
               {coffee.origin.split(',').map(code => {
@@ -1816,6 +1872,7 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
             </div>
           )}
 
+          {/* Taste notes + radar chart button */}
           {coffee.tasteNotes && (
             <div className="mb-2">
               <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Taste: </span>
@@ -1824,6 +1881,7 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
             </div>
           )}
 
+          {/* Preparation notes */}
           {coffee.preparationNotes && (
             <div className="mb-2">
               <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Prep: </span>
@@ -1866,8 +1924,9 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
             </div>
           )}
 
+          {/* Product link + Comment */}
           {(coffee.comment || coffee.url) && (
-            <div className="space-y-1">
+            <div className="space-y-1 mb-3">
               {coffee.url && (
                 <div className="flex items-center space-x-2">
                   <ExternalLink className={`w-4 h-4 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
@@ -1877,23 +1936,30 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
               {coffee.comment && <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} italic`}>"{coffee.comment}"</p>}
             </div>
           )}
-        </div>
 
-        <div className="flex flex-col space-y-1 ml-3">
-          <button onClick={onToggleFavorite} className={`p-2 ${coffee.favorite ? 'text-yellow-400' : darkMode ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-400 hover:text-yellow-500'} transition-colors`}>
-            <Star className={`w-5 h-5 ${coffee.favorite ? 'fill-current' : ''}`} />
-          </button>
-          <button onClick={onEdit} className={`p-2 ${darkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'} rounded transition-colors`}>
-            <Edit3 className="w-5 h-5" />
-          </button>
-          <button onClick={onDuplicate} className={`p-2 ${darkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'} rounded transition-colors`}>
-            <Copy className="w-5 h-5" />
-          </button>
-          <button onClick={onDelete} className={`p-2 ${darkMode ? 'text-gray-400 hover:text-red-400 hover:bg-gray-700' : 'text-gray-600 hover:text-red-600 hover:bg-red-50'} rounded transition-colors`}>
-            <Trash2 className="w-5 h-5" />
-          </button>
+          {/* Equipment badge */}
+          {equipmentName && (
+            <div className="mb-3">
+              <span className={`text-xs px-2 py-1 rounded-full font-medium ${darkMode ? 'bg-purple-900/50 text-purple-200' : 'bg-purple-100 text-purple-800'}`}>
+                <Settings className="w-3 h-3 inline mr-1" />{equipmentName}
+              </span>
+            </div>
+          )}
+
+          {/* Action buttons: Edit, Copy, Delete */}
+          <div className="flex items-center space-x-2 pt-2 border-t" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
+            <button onClick={onEdit} className={`p-2 ${darkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'} rounded transition-colors`}>
+              <Edit3 className="w-5 h-5" />
+            </button>
+            <button onClick={onDuplicate} className={`p-2 ${darkMode ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'} rounded transition-colors`}>
+              <Copy className="w-5 h-5" />
+            </button>
+            <button onClick={onDelete} className={`p-2 ${darkMode ? 'text-gray-400 hover:text-red-400 hover:bg-gray-700' : 'text-gray-600 hover:text-red-600 hover:bg-red-50'} rounded transition-colors`}>
+              <Trash2 className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
