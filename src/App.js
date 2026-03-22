@@ -1782,30 +1782,21 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
             )}
           </div>
 
-          {/* Cost / Efficiency / Rating bar — compact */}
-          {(cost || valueScore) && (
-            <div className={`flex items-center gap-3 px-3 py-1.5 rounded-xl flex-wrap ${darkMode ? 'bg-gray-800/60' : 'bg-gray-50'}`}>
-              {cost && (
-                <div className="flex items-center gap-1.5" title={cost.batchInfo || `${cost.gramsUsed}g per cup`}>
-                  <span className={`text-xs font-medium uppercase tracking-wide ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Cost</span>
-                  <span className={`font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{cost.costPerCup} {cost.currency}</span>
-                </div>
-              )}
-              {valueScore && cost && <span className={`${darkMode ? 'text-gray-600' : 'text-gray-300'}`}>|</span>}
-              {valueScore && (
-                <div className="flex items-center gap-1.5">
-                  <span className={`text-xs font-medium uppercase tracking-wide ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Efficiency</span>
-                  <span className={`font-bold ${getEfficiencyColor(valueScore, darkMode)}`}>{valueScore}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${getEfficiencyBgColor(valueScore, darkMode)} ${getEfficiencyColor(valueScore, darkMode)}`}>{getEfficiencyLabel(valueScore)}</span>
-                </div>
-              )}
-              <span className={`${darkMode ? 'text-gray-600' : 'text-gray-300'}`}>|</span>
-              <div className="flex items-center gap-1.5">
-                <span className={`text-xs font-medium uppercase tracking-wide ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Rating</span>
-                <span className={`font-bold ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>{coffee.tasteRating}/5</span>
-              </div>
-            </div>
-          )}
+          {/* Compact stats bar */}
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl flex-wrap text-xs ${darkMode ? 'bg-gray-800/60' : 'bg-gray-50'}`}>
+            {cost && (
+              <span className={`font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`} title={cost.batchInfo || `${cost.gramsUsed}g per cup`}>{cost.costPerCup} {cost.currency}</span>
+            )}
+            {cost && <span className={`${darkMode ? 'text-gray-600' : 'text-gray-300'}`}>|</span>}
+            <span className={`font-bold ${darkMode ? 'text-amber-400' : 'text-amber-600'}`}>T{coffee.tasteRating} C{coffee.cremaRating}</span>
+            {valueScore && <span className={`${darkMode ? 'text-gray-600' : 'text-gray-300'}`}>|</span>}
+            {valueScore && (
+              <>
+                <span className={`font-bold ${getEfficiencyColor(valueScore, darkMode)}`}>{valueScore}</span>
+                <span className={`px-1.5 py-0.5 rounded-full font-medium ${getEfficiencyBgColor(valueScore, darkMode)} ${getEfficiencyColor(valueScore, darkMode)}`}>{getEfficiencyLabel(valueScore)}</span>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Right side: favorite star + chevron toggle */}
