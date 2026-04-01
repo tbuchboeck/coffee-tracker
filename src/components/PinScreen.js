@@ -100,7 +100,7 @@ const PinScreen = ({ onUnlock }) => {
         <input
           ref={inputRef}
           type="password"
-          inputMode="numeric"
+          inputMode="none"
           pattern="[0-9]*"
           value={pin}
           onChange={handleChange}
@@ -121,7 +121,7 @@ const PinScreen = ({ onUnlock }) => {
                 <button
                   key={i}
                   type="button"
-                  onClick={() => { setPin(p => p.slice(0, -1)); setError(''); inputRef.current?.focus(); }}
+                  onClick={() => { setPin(p => p.slice(0, -1)); setError(''); }}
                   disabled={loading || pin.length === 0}
                   className="h-14 rounded-xl text-gray-500 hover:bg-gray-100 active:bg-gray-200 transition-colors text-sm font-medium disabled:opacity-30"
                 >
@@ -143,7 +143,6 @@ const PinScreen = ({ onUnlock }) => {
                       handleSubmit(newPin);
                     }
                   }
-                  inputRef.current?.focus();
                 }}
                 disabled={loading || pin.length >= PIN_LENGTH}
                 className="h-14 rounded-xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors text-xl font-semibold text-gray-800 disabled:opacity-30"
