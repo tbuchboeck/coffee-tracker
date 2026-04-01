@@ -776,7 +776,7 @@ export const personalCoffees = [
     "roastLevel": "medium",
     "brewingMethod": "espresso",
     "recommendedMethod": "caffe-crema",
-    "price": "",
+    "price": "17",
     "packageSize": 1000,
     "currency": "EUR",
     "preparationNotes": "Ideal für Caffè Crema, Cappuccino & Latte. Mahlgrad 23, ergibt 8-9 Bar.",
