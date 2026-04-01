@@ -754,5 +754,32 @@ export const personalCoffees = [
     "currency": "EUR",
     "preparationNotes": "Siebträger, Vollautomat, Espresso Kanne",
     "coffeeGroup": ""
+  },
+  {
+    "id": 1711929600000,
+    "roaster": "Lavazza",
+    "description": "Caffè Crema Vibrante (Caffè Art Special Edition)",
+    "favorite": false,
+    "grinded": false,
+    "grindingTime": "",
+    "grindingDegree": "23",
+    "percentArabica": 100,
+    "percentRobusta": 0,
+    "cuppingTime": new Date("2026-04-01T09:00:00.000Z"),
+    "cremaRating": 0,
+    "tasteRating": 0,
+    "tasteNotes": "Chocolate: 3",
+    "url": "",
+    "imageUrl": "",
+    "comment": "Intensität 5/10, Body: Full, Caffè Art Special Edition. Rund und ausgewogen mit Schokoladennoten. 8-9 Bar Druck bei Mahlgrad 23.",
+    "origin": "IT",
+    "roastLevel": "medium",
+    "brewingMethod": "espresso",
+    "recommendedMethod": "caffe-crema",
+    "price": "",
+    "packageSize": 1000,
+    "currency": "EUR",
+    "preparationNotes": "Ideal für Caffè Crema, Cappuccino & Latte. Mahlgrad 23, ergibt 8-9 Bar.",
+    "coffeeGroup": ""
   }
 ];
