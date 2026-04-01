@@ -1755,32 +1755,46 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
     setExpanded(prev => !prev);
   };
 
+  const roastStripeColor = {
+    'light': 'from-yellow-300 to-yellow-400',
+    'medium': 'from-amber-400 to-amber-500',
+    'medium-dark': 'from-orange-500 to-orange-600',
+    'dark': 'from-stone-600 to-stone-700',
+  }[coffee.roastLevel] || 'from-gray-400 to-gray-500';
+
+  const hasImage = coffee.imageUrl && !imgError;
+
   return (
     <div
-      className={`${darkMode ? 'glass-card-dark text-white' : 'glass-card text-gray-900'} rounded-2xl shadow-xl p-4 md:p-6 card-hover transition-all cursor-pointer`}
+      className={`${darkMode ? 'glass-card-dark text-white' : 'glass-card text-gray-900'} rounded-2xl shadow-xl card-hover transition-all cursor-pointer overflow-hidden`}
       onClick={handleCardClick}
     >
-      {/* Image with name overlay (Enhancement 2) */}
-      {coffee.imageUrl && !imgError && (
-        <div className="relative mb-3">
+      {/* Image with name overlay */}
+      {hasImage ? (
+        <div className="relative mb-3 mx-4 mt-4 md:mx-6 md:mt-6">
           <img src={coffee.imageUrl} alt={coffee.description} className="w-full h-48 object-contain rounded-xl" loading="lazy" referrerPolicy="no-referrer" onError={() => setImgError(true)} />
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent rounded-b-xl px-3 py-2">
             <p className="text-white font-bold text-sm truncate">{coffee.roaster}</p>
             <p className="text-white/80 text-xs truncate">{coffee.description}</p>
           </div>
         </div>
+      ) : (
+        /* Roast level color stripe when no image */
+        <div className={`h-1.5 bg-gradient-to-r ${roastStripeColor}`} />
       )}
 
       {/* === COMPACT VIEW (always visible) === */}
-      <div className="flex items-start justify-between">
+      <div className={`flex items-start justify-between px-4 md:px-6 pb-4 md:pb-6 ${hasImage ? 'pt-0' : 'pt-3'}`}>
         <div className="flex-1">
           {/* Roaster name + roast level badge */}
-          <div className="flex items-center space-x-2 flex-wrap gap-y-1 mb-2">
+          <div className="flex items-center space-x-2 flex-wrap gap-y-1 mb-1">
             <h3 className="text-lg sm:text-xl font-bold break-words">{coffee.roaster}</h3>
             {coffee.roastLevel && (
               <span className={`text-xs px-2 py-1 rounded-full font-medium ${roastBadge.bg} ${roastBadge.text}`}>{roastBadge.label}</span>
             )}
           </div>
+          {/* Description - always visible */}
+          <p className={`text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'} line-clamp-1`}>{coffee.description}</p>
 
           {/* Compact stats bar */}
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl flex-wrap text-xs ${darkMode ? 'bg-gray-800/60' : 'bg-gray-50'}`}>
@@ -1816,9 +1830,7 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
 
       {/* === EXPANDED VIEW (toggle) === */}
       {expanded && (
-        <div className="mt-3 border-t pt-3" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
-          {/* Description */}
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-3`}>{coffee.description}</p>
+        <div className="mx-4 md:mx-6 mb-4 md:mb-6 mt-3 border-t pt-3" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }}>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
             {/* Arabica / Robusta percentage */}
