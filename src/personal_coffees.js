@@ -770,7 +770,7 @@ export const personalCoffees = [
     "tasteRating": 0,
     "tasteNotes": "Chocolate: 3",
     "url": "",
-    "imageUrl": "",
+    "imageUrl": "/coffee-tracker/images/lavazza-vibrante.jpg",
     "comment": "Intensität 5/10, Body: Full, Caffè Art Special Edition. Rund und ausgewogen mit Schokoladennoten. 8-9 Bar Druck bei Mahlgrad 23.",
     "origin": "IT",
     "roastLevel": "medium",

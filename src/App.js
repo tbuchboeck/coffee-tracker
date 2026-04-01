@@ -1769,11 +1769,12 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
       className={`${darkMode ? 'glass-card-dark text-white' : 'glass-card text-gray-900'} rounded-2xl shadow-xl card-hover transition-all cursor-pointer overflow-hidden`}
       onClick={handleCardClick}
     >
-      {/* Image with name overlay */}
+      {/* Image banner with name overlay */}
       {hasImage ? (
-        <div className="relative mb-3 mx-4 mt-4 md:mx-6 md:mt-6">
-          <img src={coffee.imageUrl} alt={coffee.description} className="w-full h-48 object-contain rounded-xl" loading="lazy" referrerPolicy="no-referrer" onError={() => setImgError(true)} />
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent rounded-b-xl px-3 py-2">
+        <div className="relative">
+          <img src={coffee.imageUrl} alt={coffee.description} className="w-full h-32 object-cover" loading="lazy" referrerPolicy="no-referrer" onError={() => setImgError(true)} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 px-4 py-2 md:px-6">
             <p className="text-white font-bold text-sm truncate">{coffee.roaster}</p>
             <p className="text-white/80 text-xs truncate">{coffee.description}</p>
           </div>
