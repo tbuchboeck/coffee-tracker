@@ -35,4 +35,4 @@ node_modules/.cache
 *.swo
 
 # Claude-specific
-.claude
+.claudeCLAUDE.md
