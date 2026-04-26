@@ -2,63 +2,59 @@ name: Keep Supabase Active
 
 on:
   schedule:
-    # Run every Monday and Thursday at 10:00 AM UTC (max 4 days apart)
-    # Supabase Free tier pauses after 7 days of inactivity
-    # NOTE: */N day-of-month cron does NOT work reliably - gaps at month
-    # boundaries can exceed 7 days (e.g. Jan 30 → Feb 5 = 6+ days)
-    - cron: '0 10 * * 1,4'
+    # Mon, Wed, Fri at 10:00 UTC — max 3-day gap, well within 7-day pause window.
+    # NOTE: */N day-of-month cron does NOT work reliably (gaps at month boundaries).
+    - cron: '0 10 * * 1,3,5'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
   ping-database:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase Database
+      - name: Write-based ping (UPSERT into keep_alive)
         env:
           SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
         run: |
-          echo "Pinging Supabase to keep project active..."
+          # Read-only SELECTs no longer count as activity for Supabase free-tier
+          # (proven by the April 2026 pause despite Mon+Thu pings returning HTTP 200
+          # for months). Writes are unambiguous activity. We UPSERT a single row
+          # in a dedicated keep_alive table — schema in SUPABASE_KEEP_ALIVE_SETUP.sql.
 
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
-            echo "❌ ERROR: GitHub Secrets not configured!"
-            echo "Add REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY"
-            echo "in your repo Settings → Secrets and variables → Actions"
+            echo "❌ ERROR: secrets REACT_APP_SUPABASE_URL / REACT_APP_SUPABASE_ANON_KEY not set"
             exit 1
           fi
 
-          # Simple GET request to read one row - keeps the database active
+          PAYLOAD=$(printf '{"id":1,"last_ping":"%s"}' "$(date -u +%Y-%m-%dT%H:%M:%SZ)")
+
           HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
-            "${SUPABASE_URL}/rest/v1/coffees?select=id&limit=1" \
+            -X POST "${SUPABASE_URL}/rest/v1/keep_alive" \
             -H "apikey: ${SUPABASE_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_KEY}")
+            -H "Authorization: Bearer ${SUPABASE_KEY}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: resolution=merge-duplicates,return=minimal" \
+            -d "$PAYLOAD")
 
           if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
-            echo "✅ Database ping successful (HTTP $HTTP_STATUS) at $(date)"
+            echo "✅ keep_alive UPSERT successful (HTTP $HTTP_STATUS) at $(date -u)"
           else
-            echo "⚠️ Database ping returned HTTP $HTTP_STATUS"
+            echo "⚠️ keep_alive UPSERT returned HTTP $HTTP_STATUS"
             cat /tmp/response.txt
             echo ""
-            echo "The project might be paused. Restore it at https://supabase.com/dashboard"
+            echo "Common causes:"
+            echo "  - keep_alive table missing → run SUPABASE_KEEP_ALIVE_SETUP.sql"
+            echo "  - RLS not allowing anon writes → see SQL in same file"
+            echo "  - Project paused → restore at https://supabase.com/dashboard"
             exit 1
           fi
 
-      - name: Ping Supabase Auth
+      - name: Verify by reading it back
         env:
           SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
         run: |
-          echo "Pinging Supabase Auth service..."
-
-          # Hit the Auth settings endpoint to keep the auth service active
-          HTTP_STATUS=$(curl -s -o /tmp/auth_response.txt -w "%{http_code}" \
-            "${SUPABASE_URL}/auth/v1/settings" \
-            -H "apikey: ${SUPABASE_KEY}")
-
-          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
-            echo "✅ Auth ping successful (HTTP $HTTP_STATUS) at $(date)"
-          else
-            echo "⚠️ Auth ping returned HTTP $HTTP_STATUS"
-            cat /tmp/auth_response.txt
-            echo ""
-          fi
+          BODY=$(curl -s "${SUPABASE_URL}/rest/v1/keep_alive?select=last_ping" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}")
+          echo "Latest keep_alive row: $BODY"
