@@ -86,10 +86,10 @@ const CoffeeTracker = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Check if PIN session is still valid on mount
-  useEffect(() => {
-    setPinVerified(pinService.isSessionValid());
-  }, []);
+  // TEMP: PIN gate bypassed — Supabase backend offline, recovering data
+  // useEffect(() => {
+  //   setPinVerified(pinService.isSessionValid());
+  // }, []);
 
   // Load data from database on mount
   useEffect(() => {
