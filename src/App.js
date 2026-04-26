@@ -47,7 +47,7 @@ const CoffeeTracker = () => {
     error: null
   });
   const [showMigrationModal, setShowMigrationModal] = useState(false);
-  const [pinVerified, setPinVerified] = useState(() => pinService.isSessionValid());
+  const [pinVerified, setPinVerified] = useState(true);
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
 
