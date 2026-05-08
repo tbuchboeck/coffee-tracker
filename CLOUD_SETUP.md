@@ -285,6 +285,47 @@ This is **more than enough** for personal coffee tracking!
 - If you share the app with many users
 - If you add photos (current app doesn't, but future feature)
 
+## Keeping the Free-Tier Project Alive
+
+Free-tier Supabase projects pause after ~7 days of inactivity. After roughly
+90 days paused, the project is **deleted** and its subdomain disappears from
+DNS — at that point a `Restore` button no longer exists. To stay ahead of
+both, this repo has a `Keep Supabase Active` GitHub Actions workflow
+(`.github/workflows/keep-supabase-alive.yml`) that pings the project Mon/Wed/Fri.
+
+### Why the ping had to switch from SELECT to UPSERT (April 2026 incident)
+
+The original workflow did a read-only `GET /rest/v1/coffees?select=id&limit=1`
+plus a `GET /auth/v1/settings`. Both returned HTTP 200 reliably for months —
+and yet the project paused in April 2026. The forensic conclusion:
+
+1. **HTTP 200 from PostgREST ≠ activity in Supabase's pause heuristic.** A
+   trivial `SELECT id LIMIT 1` is served from the planner cache and shared
+   buffers in well under a millisecond, generates no WAL, no checkpoint, and
+   no measurable disk I/O. PostgREST is happy; the pause telemetry sees
+   essentially nothing.
+2. **`/auth/v1/settings` never counted.** It hits the GoTrue config endpoint
+   and does not touch Postgres at all. Half of the "ping volume" was always
+   inert.
+3. **The heuristic appears to have tightened over time.** Read-only pings
+   that worked in 2024 stopped being sufficient by early 2026, presumably to
+   reduce free-tier abuse by keep-alive bots.
+
+A write (`UPSERT` on a dedicated `keep_alive` table) is unambiguous activity:
+WAL is written, the write counter ticks, no path through cache can avoid it.
+That's why the current workflow upserts a single row whose schema lives in
+[`SUPABASE_KEEP_ALIVE_SETUP.sql`](./SUPABASE_KEEP_ALIVE_SETUP.sql).
+
+### If the project does get deleted
+
+A deleted free-tier project's subdomain returns NXDOMAIN — `curl` fails with
+exit code 6 ("Could not resolve host") long before any HTTP layer. This is
+distinct from a paused project, which still resolves in DNS but returns
+HTTP errors. If you see NXDOMAIN, the dashboard restore button is no longer
+the answer; you'll need to recreate the project (new URL, new anon key,
+re-run `SUPABASE_KEEP_ALIVE_SETUP.sql`, update the GitHub secrets) or
+restore from a backup if you have one.
+
 ## Additional Resources
 
 - [Supabase Documentation](https://supabase.com/docs)
