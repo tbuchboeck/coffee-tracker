@@ -13,28 +13,66 @@ jobs:
     steps:
       - name: Write-based ping (UPSERT into keep_alive)
         env:
-          SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
+          SUPABASE_URL_RAW: ${{ secrets.REACT_APP_SUPABASE_URL }}
+          SUPABASE_KEY_RAW: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
         run: |
           # Read-only SELECTs no longer count as activity for Supabase free-tier
           # (proven by the April 2026 pause despite Mon+Thu pings returning HTTP 200
           # for months). Writes are unambiguous activity. We UPSERT a single row
           # in a dedicated keep_alive table — schema in SUPABASE_KEEP_ALIVE_SETUP.sql.
 
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_KEY" ]; then
+          if [ -z "$SUPABASE_URL_RAW" ] || [ -z "$SUPABASE_KEY_RAW" ]; then
             echo "❌ ERROR: secrets REACT_APP_SUPABASE_URL / REACT_APP_SUPABASE_ANON_KEY not set"
             exit 1
           fi
 
-          PAYLOAD=$(printf '{"id":1,"last_ping":"%s"}' "$(date -u +%Y-%m-%dT%H:%M:%SZ)")
+          # Strip whitespace/CR/LF and any trailing slash. A trailing newline in
+          # the secret (common when pasted from the Supabase dashboard) makes
+          # curl fail with exit code 6 "Couldn't resolve host".
+          SUPABASE_URL=$(printf '%s' "$SUPABASE_URL_RAW" | tr -d '[:space:]' | sed 's:/*$::')
+          SUPABASE_KEY=$(printf '%s' "$SUPABASE_KEY_RAW" | tr -d '[:space:]')
 
-          HTTP_STATUS=$(curl -s -o /tmp/response.txt -w "%{http_code}" \
-            -X POST "${SUPABASE_URL}/rest/v1/keep_alive" \
+          case "$SUPABASE_URL" in
+            https://*.supabase.co|https://*.supabase.in) ;;
+            *)
+              echo "❌ ERROR: SUPABASE_URL does not look like a Supabase URL after trimming."
+              echo "   Expected: https://<project>.supabase.co"
+              echo "   Got host pattern (host masked): https://***$(printf '%s' "$SUPABASE_URL" | sed 's:^https\?://[^.]*::')"
+              exit 1
+              ;;
+          esac
+
+          PAYLOAD=$(printf '{"id":1,"last_ping":"%s"}' "$(date -u +%Y-%m-%dT%H:%M:%SZ)")
+          ENDPOINT="${SUPABASE_URL}/rest/v1/keep_alive"
+
+          # Don't let set -e kill us before we can diagnose. Capture curl's
+          # own exit code so transport errors (DNS, TLS) are distinguishable
+          # from HTTP errors.
+          set +e
+          HTTP_STATUS=$(curl -sS -o /tmp/response.txt -w "%{http_code}" \
+            --max-time 30 \
+            -X POST "$ENDPOINT" \
             -H "apikey: ${SUPABASE_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_KEY}" \
             -H "Content-Type: application/json" \
             -H "Prefer: resolution=merge-duplicates,return=minimal" \
-            -d "$PAYLOAD")
+            -d "$PAYLOAD" 2>/tmp/curl_err.txt)
+          CURL_EXIT=$?
+          set -e
+
+          if [ "$CURL_EXIT" -ne 0 ]; then
+            echo "❌ curl failed with exit code $CURL_EXIT (transport-level error, no HTTP response)"
+            echo "--- curl stderr ---"
+            cat /tmp/curl_err.txt || true
+            echo "-------------------"
+            case "$CURL_EXIT" in
+              6)  echo "Hint: exit 6 = couldn't resolve host. Check that REACT_APP_SUPABASE_URL has no trailing newline/whitespace and starts with https://." ;;
+              7)  echo "Hint: exit 7 = couldn't connect. Network or firewall issue, or project paused." ;;
+              28) echo "Hint: exit 28 = timeout. Project may be paused or under heavy load." ;;
+              35|60) echo "Hint: TLS/cert error." ;;
+            esac
+            exit 1
+          fi
 
           if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
             echo "✅ keep_alive UPSERT successful (HTTP $HTTP_STATUS) at $(date -u)"
@@ -51,10 +89,12 @@ jobs:
 
       - name: Verify by reading it back
         env:
-          SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
+          SUPABASE_URL_RAW: ${{ secrets.REACT_APP_SUPABASE_URL }}
+          SUPABASE_KEY_RAW: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
         run: |
-          BODY=$(curl -s "${SUPABASE_URL}/rest/v1/keep_alive?select=last_ping" \
+          SUPABASE_URL=$(printf '%s' "$SUPABASE_URL_RAW" | tr -d '[:space:]' | sed 's:/*$::')
+          SUPABASE_KEY=$(printf '%s' "$SUPABASE_KEY_RAW" | tr -d '[:space:]')
+          BODY=$(curl -sS "${SUPABASE_URL}/rest/v1/keep_alive?select=last_ping" \
             -H "apikey: ${SUPABASE_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_KEY}")
           echo "Latest keep_alive row: $BODY"
