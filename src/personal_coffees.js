@@ -797,7 +797,7 @@ export const personalCoffees = [
     "tasteRating": 0,
     "tasteNotes": "",
     "url": "https://www.vettore.at/borbone-blu-bar",
-    "imageUrl": "",
+    "imageUrl": "/images/borbone-blu-linea-bar-1kg.webp",
     "comment": "Bestellt bei vettore.at am 12.05.2026 (Bestell-Nr. 71397) zu 15,99 €/kg + 5,49 € Versand. Neapolitanischer Linea-Bar-Blend, erwartete Noten: Kakao, Holz, Vanille, Schokolade, leichte Würze. Noch nicht verkostet.",
     "origin": "SA,AS",
     "roastLevel": "dark",
