@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "exportDate": "2026-05-12T20:07:04.000Z",
+  "coffees": [
+    {
+      "id": 1747087624000,
+      "cuppingTime": "2026-05-12T20:07:04.000Z",
+      "roaster": "Caffe Borbone",
+      "description": "Miscela Blu Linea Bar",
+      "origin": "SA,AS",
+      "url": "https://www.vettore.at/borbone-blu-bar",
+      "percentArabica": 30,
+      "percentRobusta": 70,
+      "roastLevel": "dark",
+      "brewingMethod": "espresso",
+      "recommendedMethod": "espresso",
+      "grinded": false,
+      "grindingTime": "",
+      "grindingDegree": "",
+      "preparationNotes": "",
+      "coffeeAmount": null,
+      "servings": null,
+      "cremaRating": 0,
+      "tasteRating": 0,
+      "tasteNotes": "",
+      "comment": "Bestellt bei vettore.at am 12.05.2026 (Bestell-Nr. 71397) zu 15,99 €/kg + 5,49 € Versand. Neapolitanischer Linea-Bar-Blend, erwartete Noten: Kakao, Holz, Vanille, Schokolade, leichte Würze. Noch nicht verkostet.",
+      "favorite": false,
+      "price": "15.99",
+      "packageSize": 1000,
+      "currency": "EUR",
+      "coffeeGroup": "",
+      "imageUrl": "/images/borbone-blu-linea-bar-1kg.webp"
+    }
+  ]
+}
