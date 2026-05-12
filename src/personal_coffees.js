@@ -781,5 +781,32 @@ export const personalCoffees = [
     "currency": "EUR",
     "preparationNotes": "Ideal für Caffè Crema, Cappuccino & Latte. Mahlgrad 23, ergibt 8-9 Bar.",
     "coffeeGroup": ""
+  },
+  {
+    "id": 1747087624000,
+    "roaster": "Caffe Borbone",
+    "description": "Miscela Blu Linea Bar",
+    "favorite": false,
+    "grinded": false,
+    "grindingTime": "",
+    "grindingDegree": "",
+    "percentArabica": 30,
+    "percentRobusta": 70,
+    "cuppingTime": new Date("2026-05-12T20:07:04.000Z"),
+    "cremaRating": 0,
+    "tasteRating": 0,
+    "tasteNotes": "",
+    "url": "https://www.vettore.at/borbone-blu-bar",
+    "imageUrl": "",
+    "comment": "Bestellt bei vettore.at am 12.05.2026 (Bestell-Nr. 71397) zu 15,99 €/kg + 5,49 € Versand. Neapolitanischer Linea-Bar-Blend, erwartete Noten: Kakao, Holz, Vanille, Schokolade, leichte Würze. Noch nicht verkostet.",
+    "origin": "SA,AS",
+    "roastLevel": "dark",
+    "brewingMethod": "espresso",
+    "recommendedMethod": "espresso",
+    "price": "15.99",
+    "packageSize": 1000,
+    "currency": "EUR",
+    "preparationNotes": "",
+    "coffeeGroup": ""
   }
 ];
