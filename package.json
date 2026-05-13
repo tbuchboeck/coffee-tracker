@@ -2,7 +2,6 @@
   "name": "coffee-tracker",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://tbuchboeck.github.io/coffee-tracker",
   "dependencies": {
     "@supabase/supabase-js": "^2.97.0",
     "jspdf": "^4.2.1",

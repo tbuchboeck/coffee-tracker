@@ -4,8 +4,8 @@ import { LineChart, Line, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, 
 import jsPDF from 'jspdf';
 import { personalCoffees } from './personal_coffees';
 import { coffeeService } from './services/coffeeService';
-import { pinService } from './services/pinService';
-import PinScreen from './components/PinScreen';
+import { authService } from './services/authService';
+import AuthScreen from './components/AuthScreen';
 
 // Extracted modules
 import { brewingMethods } from './constants/brewingMethods';
@@ -47,7 +47,7 @@ const CoffeeTracker = () => {
     error: null
   });
   const [showMigrationModal, setShowMigrationModal] = useState(false);
-  const [pinVerified, setPinVerified] = useState(() => pinService.isSessionValid());
+  const [pinVerified, setPinVerified] = useState(() => authService.isSessionValid());
   const fileInputRef = useRef(null);
   const formRef = useRef(null);
 
@@ -88,7 +88,7 @@ const CoffeeTracker = () => {
 
   // Check if PIN session is still valid on mount
   useEffect(() => {
-    setPinVerified(pinService.isSessionValid());
+    setPinVerified(authService.isSessionValid());
   }, []);
 
   // Load data from database on mount
@@ -666,7 +666,7 @@ const CoffeeTracker = () => {
     }
   };
 
-  const handleLock = () => { pinService.clearSession(); setPinVerified(false); setCoffees([]); };
+  const handleLock = () => { authService.clearSession(); setPinVerified(false); setCoffees([]); };
 
   const getStorageInfo = () => {
     try {
@@ -811,7 +811,7 @@ const CoffeeTracker = () => {
 
   // PIN check
   if (!pinVerified) {
-    return <PinScreen onUnlock={() => setPinVerified(true)} />;
+    return <AuthScreen onUnlock={() => setPinVerified(true)} />;
   }
 
   const inputClass = `w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-colors ${

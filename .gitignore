@@ -37,3 +37,4 @@ node_modules/.cache
 # Claude-specific
 .claude
 CLAUDE.md
+.vercel
