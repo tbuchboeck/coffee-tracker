@@ -1,30 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Flat colours — ImageMagick's SVG renderer drops gradients to black, so
-       no <linearGradient> here. Coffee-bean motif (distinct from the
-       breakfast app's mug, same warm palette family). -->
+  <!-- Full-bleed warm cream background, same palette as the Frühstück icon
+       so the personal-app family reads as a set. No rounded corners on the
+       SVG itself (the OS rounds favicon corners; transparent SVG corners
+       were being filled with white on Android's launcher). -->
+  <rect width="512" height="512" fill="#e8c878"/>
 
-  <!-- warm cream background -->
-  <rect width="512" height="512" rx="96" fill="#d9b074"/>
+  <!-- Coffee bean — large, centred, fills most of the canvas to match the
+       breakfast mug's visual weight. Bean is a tilted ellipse with a curved
+       furrow down the middle. Dark brown silhouette + slightly darker stroke. -->
+  <g transform="rotate(-22 256 256)">
+    <ellipse cx="256" cy="256" rx="160" ry="220" fill="#3a2515"/>
+    <ellipse cx="256" cy="256" rx="160" ry="220" fill="none" stroke="#1f100a" stroke-width="10"/>
+    <!-- centre furrow: S-curve that gives the bean its identity -->
+    <path d="M256 50 Q210 200 256 256 Q302 312 256 462"
+      fill="none" stroke="#1f100a" stroke-width="16" stroke-linecap="round"/>
+    <!-- highlight gloss on upper-left -->
+    <ellipse cx="190" cy="160" rx="38" ry="68" fill="#6b4528" opacity=".55"/>
+  </g>
 
-  <!-- saucer hint, behind bean -->
-  <ellipse cx="256" cy="430" rx="150" ry="10" fill="#3a2515" opacity=".18"/>
-
-  <!-- coffee bean — two-lobed seed shape, classic silhouette -->
-  <!-- outer ovoid -->
-  <ellipse cx="256" cy="256" rx="140" ry="190" fill="#3a2515" transform="rotate(-22 256 256)"/>
-  <ellipse cx="256" cy="256" rx="140" ry="190" fill="none" stroke="#1f100a" stroke-width="8" transform="rotate(-22 256 256)"/>
-
-  <!-- centre furrow — the s-curve crease that makes it read as a bean -->
-  <path d="M256 80 Q220 200 256 256 Q292 312 256 432"
-    fill="none" stroke="#1f100a" stroke-width="14" stroke-linecap="round"
-    transform="rotate(-22 256 256)"/>
-
-  <!-- highlight gloss on upper-left of the bean -->
-  <ellipse cx="190" cy="180" rx="34" ry="60" fill="#6b4528" opacity=".55" transform="rotate(-22 256 256)"/>
-
-  <!-- a small star-shaped sparkle (echoes the rating system) -->
-  <g transform="translate(360 130)">
-    <path d="M0 -22 L6 -7 L22 -5 L10 6 L13 22 L0 14 L-13 22 L-10 6 L-22 -5 L-6 -7 Z"
-      fill="#f5e0b8" stroke="#3a2515" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- small star sparkle (echoes the rating system; distinguishes
+       Coffee Tracker from the Frühstück mug at glance). -->
+  <g transform="translate(388 110)">
+    <path d="M0 -26 L7 -8 L26 -6 L12 7 L16 26 L0 17 L-16 26 L-12 7 L-26 -6 L-7 -8 Z"
+      fill="#f5e0b8" stroke="#3a2515" stroke-width="3" stroke-linejoin="round"/>
   </g>
 </svg>
