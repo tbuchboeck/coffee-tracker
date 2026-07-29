@@ -6,6 +6,10 @@
 const APP_ID = 'coffee';
 const AUTH_API = 'https://auth.apps.buchboeck.at/api/auth';
 const SESSION_KEY = 'coffee.auth.session.v1';
+// Supabase-compatible JWT returned alongside the session on login/enroll.
+// supabaseClient.js reads it to authenticate PostgREST requests (role=authenticated).
+// Must match SUPABASE_JWT_KEY in supabaseClient.js.
+const SUPABASE_JWT_KEY = 'coffee.supabase.jwt.v1';
 
 // ── Session JWT helpers ───────────────────────────────────────────────
 function decodeJwtPayload(token) {
@@ -125,6 +129,16 @@ class AuthService {
 
   clearSession() {
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SUPABASE_JWT_KEY);
+  }
+
+  // Persist the Supabase JWT if the auth service returned one. Older auth
+  // deployments (pre-bridge) omit it — the app then falls back to the bare
+  // anon key, i.e. exactly the previous behaviour.
+  _storeSupabaseJwt(verifyResp) {
+    if (verifyResp && verifyResp.supabase) {
+      sessionStorage.setItem(SUPABASE_JWT_KEY, verifyResp.supabase);
+    }
   }
 
   async loginWithPasskey() {
@@ -138,6 +152,7 @@ class AuthService {
       assertion: encodeAssertionResponse(cred),
     });
     sessionStorage.setItem(SESSION_KEY, verifyResp.session);
+    this._storeSupabaseJwt(verifyResp);
     return verifyResp.session;
   }
 
@@ -159,6 +174,7 @@ class AuthService {
       device_label: detectDeviceLabel(),
     });
     sessionStorage.setItem(SESSION_KEY, verifyResp.session);
+    this._storeSupabaseJwt(verifyResp);
     return verifyResp.session;
   }
 }
