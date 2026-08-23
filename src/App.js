@@ -956,6 +956,10 @@ const CoffeeTracker = () => {
                           : (pushOn ? 'Alarm ausschalten' : 'Alarm einschalten'),
                         action: handleTogglePush,
                       }] : []),
+                      // Zweiter Weg zum Warenkorb: die Push-Meldung ist der
+                      // erste, aber sie laesst sich wegwischen.
+                      { icon: <ExternalLink className="w-4 h-4" />, label: 'Kaffee nachbestellen',
+                        action: () => window.open('https://www.vettore.at/Warenkorb', '_blank', 'noopener') },
                       { divider: true },
                       { icon: <RotateCcw className="w-4 h-4 text-red-500" />, label: 'Reset All Data', action: handleResetToDefaults, danger: true },
                     ].map((item, i) =>

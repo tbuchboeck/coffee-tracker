@@ -87,3 +87,33 @@ test('nur echte Push-Dienste werden angenommen', () => {
   // Kein Teilstring-Treffer: der Host muss wirklich enden wie erlaubt
   assert.ok(!validEndpoint('https://fcm.googleapis.com.evil.tld/x'), 'Suffix-Trick');
 });
+
+/* --- Weg von der Meldung zum Warenkorb ----------------------------------- */
+test('die Meldung zeigt auf den Warenkorb, nicht auf die App', () => {
+  const p = buildPayload(evaluate(base, day('2026-08-27')));
+  assert.equal(p.url, 'https://www.vettore.at/Warenkorb');
+  assert.deepEqual(p.actions.map(a => a.action), ['cart', 'app']);
+  assert.match(p.body, /Warenkorb/);
+  // Web Push zeigt auf Android hoechstens zwei Schaltflaechen
+  assert.ok(p.actions.length <= 2);
+});
+
+test('notificationclick verschluckt externe Ziele nicht mehr', () => {
+  // Der alte Handler fokussierte IMMER zuerst ein offenes App-Fenster und kam
+  // an openWindow gar nicht vorbei -- ein Link nach aussen war wirkungslos.
+  const swSrc = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'service-worker.js'), 'utf8');
+  const h = swSrc.slice(swSrc.indexOf("addEventListener('notificationclick'"));
+  assert.match(h, /sameOrigin/);
+  // Der Auswurf fuer fremde Ziele muss VOR der Fensterschleife stehen
+  assert.ok(h.indexOf('if (!sameOrigin) return self.clients.openWindow') < h.indexOf('matchAll'),
+    'externes Ziel muss vor dem Fokussieren abgehandelt werden');
+  assert.match(h, /event\.action === 'app'/);
+  // startsWith statt includes: Origin darf nicht bloss irgendwo vorkommen
+  assert.ok(!/w\.url\.includes\(self\.location\.origin\)/.test(h));
+  assert.match(h, /w\.url\.startsWith\(self\.location\.origin\)/);
+});
+
+test('showNotification reicht die Schaltflaechen durch', () => {
+  const swSrc = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'service-worker.js'), 'utf8');
+  assert.match(swSrc, /actions: Array\.isArray\(data\.actions\)/);
+});

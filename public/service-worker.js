@@ -75,6 +75,7 @@ self.addEventListener('push', event => {
       tag: data.tag || 'coffee-reorder',
       renotify: true,
       requireInteraction: !!data.requireInteraction,
+      actions: Array.isArray(data.actions) ? data.actions.slice(0, 2) : [],
       data: { url: data.url || '/' },
     })
   );
@@ -82,15 +83,33 @@ self.addEventListener('push', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || '/';
-  event.waitUntil(
-    self.clients
-      .matchAll({ type: 'window', includeUncontrolled: true })
-      .then(wins => {
-        for (const w of wins) {
-          if (w.url.includes(self.location.origin)) return w.focus();
-        }
-        return self.clients.openWindow(url);
-      })
-  );
+  const data = event.notification.data || {};
+  // Normaler Tipp und "Zum Warenkorb" fuehren zum Shop -- das ist die Handlung,
+  // um die es geht. "App oeffnen" ist die zweite Schaltflaeche.
+  const target = event.action === 'app' ? '/' : (data.url || '/');
+
+  let sameOrigin = true;
+  try {
+    sameOrigin = new URL(target, self.location.origin).origin === self.location.origin;
+  } catch (e) {
+    sameOrigin = true;
+  }
+
+  event.waitUntil((async () => {
+    // Externes Ziel: NIE ein vorhandenes App-Fenster fokussieren. Genau das
+    // hat den Link vorher verschluckt -- der alte Handler fokussierte immer
+    // zuerst und kam an openWindow gar nicht mehr vorbei.
+    if (!sameOrigin) return self.clients.openWindow(target);
+
+    const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const w of wins) {
+      // startsWith statt includes: die Origin darf nicht bloss irgendwo in der
+      // Adresse vorkommen (z.B. als Weiterleitungsparameter).
+      if (w.url.startsWith(self.location.origin)) {
+        await w.focus();
+        return;
+      }
+    }
+    return self.clients.openWindow(target);
+  })());
 });

@@ -15,6 +15,10 @@ const webpush = require('web-push');
 const VAPID_PUBLIC =
   'BEEXWLxBG2R-rcaeXzKajw8hJn2y0kgBZA8rO2C1B7HHz1lgGGjkh-2FjOavp_F0LvfrUCwowGTFOnxOW7YngdQ';
 
+// Ziel der Meldung: der vorbereitete Warenkorb, nicht die App. Die Handlung
+// ist "bestellen", und die passiert im Shop.
+const CART_URL = 'https://www.vettore.at/Warenkorb';
+
 const LEAD_DAYS = 3; // vettore.at: Lieferzeit 1-3 Werktage
 const BUFFER_DAYS = 2;
 const WARN_AHEAD = 7;
@@ -67,9 +71,17 @@ function buildPayload(c) {
     critical: '☕ Kaffee ist aus',
   }[c.tier] || '☕ Kaffee';
   const body = c.tier === 'critical'
-    ? `Seit ${c.empty} rechnerisch leer. Warenkorb bei vettore.at pruefen.`
-    : `Leer am ${c.empty} (noch ${c.daysLeft} Tage). Bestellen bis ${c.reorder}.`;
-  return { title, body, tag: 'coffee-reorder', requireInteraction: c.tier !== 'warn', url: '/' };
+    ? `Seit ${c.empty} rechnerisch leer. Der Warenkorb bei vettore.at liegt bereit.`
+    : `Leer am ${c.empty} (noch ${c.daysLeft} Tage). Bestellen bis ${c.reorder} — Warenkorb liegt bereit.`;
+  return {
+    title, body, tag: 'coffee-reorder',
+    requireInteraction: c.tier !== 'warn',
+    url: CART_URL,
+    actions: [
+      { action: 'cart', title: 'Zum Warenkorb' },
+      { action: 'app', title: 'App oeffnen' },
+    ],
+  };
 }
 
 function connectionString(env = process.env) {
