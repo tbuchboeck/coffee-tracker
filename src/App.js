@@ -7,7 +7,7 @@ import { coffeeService } from './services/coffeeService';
 import { authService } from './services/authService';
 import AuthScreen from './components/AuthScreen';
 import { supabase } from './supabaseClient';
-import { pushSupported, currentSubscription, enablePush, disablePush } from './services/pushService';
+import { pushSupported, pushStatus, enablePush, disablePush } from './services/pushService';
 
 // Extracted modules
 import { brewingMethods } from './constants/brewingMethods';
@@ -64,23 +64,40 @@ const CoffeeTracker = () => {
 
   // Nachschub-Alarm (Web Push)
   const [pushOn, setPushOn] = useState(false);
-  useEffect(() => {
-    if (!pushSupported()) return;
-    currentSubscription().then(s => setPushOn(Boolean(s))).catch(() => {});
+  const [pushBusy, setPushBusy] = useState(false);
+  // Der Schalter folgt der DB-ZEILE, nicht dem Browser-Abo: der Cron
+  // verschickt nur an das, was in der Tabelle steht.
+  const refreshPush = React.useCallback(async () => {
+    if (!pushSupported()) return null;
+    const st = await pushStatus(supabase);
+    setPushOn(st.db);
+    return st;
   }, []);
+  useEffect(() => { refreshPush().catch(() => {}); }, [refreshPush]);
   const handleTogglePush = async () => {
+    if (pushBusy) return;
+    setPushBusy(true);
     try {
       if (pushOn) {
         await disablePush(supabase);
-        setPushOn(false);
         alert('Nachschub-Alarm aus.');
       } else {
         await enablePush(supabase);
-        setPushOn(true);
         alert('Nachschub-Alarm an. Die Meldung kommt, wenn der Vorrat zur Neige geht.');
       }
     } catch (e) {
-      alert(`Nachschub-Alarm: ${e.message}`);
+      // Diagnose mitgeben: ohne sie sieht ein Fehlschlag genauso aus wie
+      // "nichts passiert", und der Schalter erklaert sich nicht.
+      let extra = '';
+      try {
+        const st = await pushStatus(supabase);
+        extra = `\n\nStand: Berechtigung=${st.permission}, Browser-Abo=${st.browser ? 'ja' : 'nein'}, `
+              + `Cloud-Zeile=${st.db ? 'ja' : 'nein'}${st.error ? `, Fehler=${st.error}` : ''}`;
+      } catch (_) { /* Diagnose ist Beiwerk, nicht der Zweck */ }
+      alert(`Nachschub-Alarm fehlgeschlagen:\n${e.message}${extra}`);
+    } finally {
+      await refreshPush().catch(() => {});
+      setPushBusy(false);
     }
   };
 
