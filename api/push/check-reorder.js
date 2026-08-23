@@ -132,10 +132,25 @@ module.exports = async function handler(req, res) {
     if (!rows.length) throw new Error('coffee_stock hat keine Zeile id=1 — Bestand unbekannt');
 
     const stock = rows[0];
+    // Lebenszeichen bei JEDEM Lauf, vor allen frueheren Ausstiegen. notified_on
+    // entsteht nur, wenn auch gesendet wurde -- im Normalfall ("noch genug da")
+    // gaebe es also gar keine Schreibspur, und ein toter Cron saehe aus wie ein
+    // ruhiger. Fuer einen Melder ist das AUSBLEIBEN des erwarteten Schreibens
+    // das eigentliche Gesundheitssignal.
+    //
+    // Bewusst in coffee_push_diag statt in einer neuen Spalte: die Tabelle gibt
+    // es schon, die Cron-Rolle darf hineinschreiben (keine Rechteaenderung), und
+    // eine Zeile pro Lauf ergibt eine HISTORIE statt nur des letzten Zeitpunkts
+    // -- man sieht, was der Cron an jedem Tag entschieden hat.
     if (stock.opened_at instanceof Date) stock.opened_at = iso(stock.opened_at);
     if (stock.suppress_until instanceof Date) stock.suppress_until = iso(stock.suppress_until);
     const today = new Date(`${iso(new Date())}T00:00:00Z`);
     const cond = evaluate(stock, today);
+    await client.query(
+      "insert into coffee_push_diag (step, message, user_agent) values ('cron-run', $1, $2)",
+      [`tier=${cond.tier}${cond.empty ? ` leer=${cond.empty}` : ''}`,
+       isTest ? 'test=1' : 'cron']
+    );
 
     if ((cond.tier === 'ok' || cond.tier === 'ordered') && !isTest) {
       return res.json({ ok: true, sent: 0, ...cond });
