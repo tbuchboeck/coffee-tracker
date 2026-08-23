@@ -49,6 +49,17 @@ const dayDiff = (a, b) => Math.round((a - b) / 86400000);
 
 /* Reine Rechnung, damit sie ohne DB testbar bleibt. */
 function evaluate(stock, today) {
+  // Bestellung unterwegs: schweigen bis zum erwarteten Liefertag. Ein Melder,
+  // der mahnt, was man schon erledigt hat, wird ignoriert -- und dann auch der
+  // echte Alarm. Laeuft die Frist ab, ohne dass der Bestand nachgetragen wurde,
+  // meldet er wieder: das ist dann der richtige Hinweis ("wo bleibt sie?").
+  if (stock.suppress_until) {
+    const bis = new Date(`${stock.suppress_until}T00:00:00Z`);
+    if (!Number.isNaN(bis.getTime()) && today <= bis) {
+      return { tier: 'ordered', suppressedUntil: iso(bis), days: 0, empty: null,
+               reorder: null, daysLeft: null, perDay: stock.cups_per_day * stock.grams_per_cup };
+    }
+  }
   const perDay = stock.cups_per_day * stock.grams_per_cup;
   if (!perDay || perDay <= 0) throw new Error(`Unbrauchbare Verbrauchsrate: ${perDay} g/Tag`);
   const days = Math.floor((stock.bags * stock.bag_grams) / perDay);
@@ -104,7 +115,7 @@ module.exports = async function handler(req, res) {
     await client.connect();
 
     const { rows } = await client.query(
-      'select opened_at, bags, bag_grams, cups_per_day, grams_per_cup, notified_on from coffee_stock where id = 1'
+      'select opened_at, bags, bag_grams, cups_per_day, grams_per_cup, notified_on, suppress_until from coffee_stock where id = 1'
     );
     // Unbekannter Zustand ist ein Fehler, keine Meldung: lieber ein roter Lauf
     // als ein stiller, der aussieht wie "nichts zu tun".
@@ -112,11 +123,12 @@ module.exports = async function handler(req, res) {
 
     const stock = rows[0];
     if (stock.opened_at instanceof Date) stock.opened_at = iso(stock.opened_at);
+    if (stock.suppress_until instanceof Date) stock.suppress_until = iso(stock.suppress_until);
     const today = new Date(`${iso(new Date())}T00:00:00Z`);
     const cond = evaluate(stock, today);
 
-    if (cond.tier === 'ok' && !isTest) {
-      return res.json({ ok: true, tier: cond.tier, sent: 0, ...cond });
+    if ((cond.tier === 'ok' || cond.tier === 'ordered') && !isTest) {
+      return res.json({ ok: true, sent: 0, ...cond });
     }
     // Stummschalter, der sich selbst zuruecksetzt: nur der heutige Tag wird
     // unterdrueckt. Ein haengender Zustand kann den Melder nicht dauerhaft

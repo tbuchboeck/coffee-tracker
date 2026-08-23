@@ -117,3 +117,23 @@ test('showNotification reicht die Schaltflaechen durch', () => {
   const swSrc = fs.readFileSync(path.join(__dirname, '..', '..', 'public', 'service-worker.js'), 'utf8');
   assert.match(swSrc, /actions: Array\.isArray\(data\.actions\)/);
 });
+
+/* --- Bestellung unterwegs ------------------------------------------------- */
+test('waehrend eine Bestellung laeuft, schweigt der Melder', () => {
+  const s = { ...base, suppress_until: '2026-08-28' };
+  assert.equal(evaluate(s, day('2026-08-24')).tier, 'ordered');
+  assert.equal(evaluate(s, day('2026-08-28')).tier, 'ordered');   // Grenztag inklusive
+  assert.equal(evaluate(s, day('2026-08-28')).suppressedUntil, '2026-08-28');
+});
+
+test('nach Fristablauf meldet er wieder — das ist der Punkt', () => {
+  // Ist die Lieferung da und der Bestand nachgetragen, aendert sich opened_at.
+  // Passiert das nicht, ist die Meldung der richtige Hinweis.
+  const s = { ...base, suppress_until: '2026-08-28' };
+  assert.equal(evaluate(s, day('2026-08-29')).tier, 'urgent');   // leer erst 01.09., also dringend statt leer
+});
+
+test('unbrauchbares suppress_until wird ignoriert, nicht geglaubt', () => {
+  assert.equal(evaluate({ ...base, suppress_until: 'Unsinn' }, day('2026-08-24')).tier, 'warn');
+  assert.equal(evaluate({ ...base, suppress_until: null }, day('2026-08-24')).tier, 'warn');
+});
