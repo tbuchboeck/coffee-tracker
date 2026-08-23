@@ -925,9 +925,14 @@ const CoffeeTracker = () => {
                       { icon: <Lock className="w-4 h-4" />, label: 'Lock App', action: handleLock },
                       { icon: darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />, label: darkMode ? 'Light Mode' : 'Dark Mode', action: toggleDarkMode },
                       { icon: <Settings className="w-4 h-4" />, label: 'Equipment', action: () => setShowEquipmentManager(true) },
+                      // Symbol UND Text zeigen denselben ZUSTAND, nicht die
+                      // Aktion. Vorher zeigte das Symbol den Zustand ("aus")
+                      // und der Text die Aktion ("an") — zusammen unlesbar.
                       ...(pushSupported() ? [{
                         icon: pushOn ? <Bell className="w-4 h-4 text-amber-600" /> : <BellOff className="w-4 h-4" />,
-                        label: pushOn ? 'Nachschub-Alarm aus' : 'Nachschub-Alarm an',
+                        label: pushBusy
+                          ? 'Nachschub-Alarm: \u2026'
+                          : `Nachschub-Alarm: ${pushOn ? 'an' : 'aus'}`,
                         action: handleTogglePush,
                       }] : []),
                       { divider: true },
