@@ -6,6 +6,11 @@
 // waitUntil() scheitert damit die Installation, und ein nicht installierter
 // Worker wird nie aktiv. Folge: navigator.serviceWorker.ready loeste nie auf.
 const CACHE_NAME = 'coffee-tracker-v3';
+// Wird beim Aktivieren gemeldet, damit von aussen sichtbar ist, WELCHE Fassung
+// auf einem Geraet laeuft. Ohne das ist "der Nutzer hat noch den alten Worker"
+// eine Vermutung statt einer Feststellung -- und genau daran haben sich hier
+// schon zwei Fehlersuchen aufgehalten. Bei jeder Aenderung hochzaehlen.
+const SW_VERSION = 'v3.1-warenkorb-link';
 
 // Nur Adressen, die es sicher gibt. Gehashte Bundles bewusst nicht: ihre Namen
 // aendern sich mit jedem Build und muessten hier nachgepflegt werden.
@@ -42,6 +47,12 @@ self.addEventListener('fetch', event => {
 
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
+  // Fire-and-forget: die Meldung darf die Aktivierung nie aufhalten.
+  fetch('/api/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ kind: 'diag', step: 'sw-activate', message: SW_VERSION }),
+  }).catch(() => {});
   event.waitUntil(
     self.clients.claim().then(() => caches.keys()).then(cacheNames => {
       return Promise.all(

@@ -69,3 +69,14 @@ test('Push- und Klick-Handler sind vorhanden', () => {
   assert.match(SW, /addEventListener\('push'/);
   assert.match(SW, /addEventListener\('notificationclick'/);
 });
+
+test('der Worker meldet seine Version beim Aktivieren', () => {
+  // Ohne das ist "auf dem Geraet laeuft noch der alte Worker" eine Vermutung.
+  assert.match(SW, /const SW_VERSION = '[^']+'/);
+  const act = SW.slice(SW.indexOf("addEventListener('activate'"));
+  assert.match(act, /step: 'sw-activate'/);
+  assert.match(act, /SW_VERSION/);
+  // Darf die Aktivierung nicht aufhalten
+  assert.ok(act.indexOf('.catch(() => {})') < act.indexOf('event.waitUntil'),
+    'die Meldung muss fire-and-forget vor waitUntil stehen');
+});
