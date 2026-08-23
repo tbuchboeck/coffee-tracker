@@ -84,6 +84,20 @@ export async function pushStatus() {
   return status;
 }
 
+/* Meldet einen Fehlschlag an den Server. Fire-and-forget: die Diagnose darf
+ * den eigentlichen Fehler nie verdecken. */
+export async function reportFailure(step, message) {
+  try {
+    const st = await pushStatus();
+    await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'diag', step, message,
+        permission: st.permission, browser: st.browser, db: st.db }),
+    });
+  } catch (e) { /* Diagnose ist Beiwerk */ }
+}
+
 export async function enablePush() {
   if (!pushSupported()) throw new Error('Dieser Browser kann kein Web Push');
 

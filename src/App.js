@@ -6,7 +6,7 @@ import { personalCoffees } from './personal_coffees';
 import { coffeeService } from './services/coffeeService';
 import { authService } from './services/authService';
 import AuthScreen from './components/AuthScreen';
-import { pushSupported, pushStatus, enablePush, disablePush } from './services/pushService';
+import { pushSupported, pushStatus, enablePush, disablePush, reportFailure } from './services/pushService';
 
 // Extracted modules
 import { brewingMethods } from './constants/brewingMethods';
@@ -93,7 +93,8 @@ const CoffeeTracker = () => {
         extra = `\n\nStand: Berechtigung=${st.permission}, Browser-Abo=${st.browser ? 'ja' : 'nein'}, `
               + `Cloud-Zeile=${st.db ? 'ja' : 'nein'}${st.error ? `, Fehler=${st.error}` : ''}`;
       } catch (_) { /* Diagnose ist Beiwerk, nicht der Zweck */ }
-      alert(`Nachschub-Alarm fehlgeschlagen:\n${e.message}${extra}`);
+      reportFailure(pushOn ? 'disable' : 'enable', e.message);
+      alert(`Nachschub-Alarm fehlgeschlagen:\n${e.message}${extra}\n\n(Der Fehler wurde gemeldet.)`);
     } finally {
       await refreshPush().catch(() => {});
       setPushBusy(false);

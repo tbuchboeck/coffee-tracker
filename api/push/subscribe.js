@@ -67,6 +67,20 @@ module.exports = async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'method' });
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+
+    // Diagnose-Meldung: der Client schickt hier, WORAN er gescheitert ist.
+    // Ohne das haengt die Fehlersuche daran, dass der Nutzer eine Meldung vom
+    // Handy abtippt — was beim ersten Anlauf schon nicht geklappt hat.
+    if (body && body.kind === 'diag') {
+      client = await connect();
+      await client.query(
+        `insert into coffee_push_diag (step, message, permission, browser_sub, db_row, user_agent)
+         values ($1,$2,$3,$4,$5,$6)`,
+        [String(body.step || '').slice(0, 80), String(body.message || '').slice(0, 500),
+         String(body.permission || '').slice(0, 20), Boolean(body.browser), Boolean(body.db),
+         String(req.headers['user-agent'] || '').slice(0, 200)]);
+      return res.status(200).json({ ok: true, logged: true });
+    }
     const endpoint = body && body.endpoint;
     const keys = (body && body.keys) || {};
     if (!endpoint || !keys.p256dh || !keys.auth) {
