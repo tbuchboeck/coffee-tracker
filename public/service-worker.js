@@ -1,34 +1,49 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = 'coffee-tracker-v2';
-const urlsToCache = [
-  '/',
-  '/static/css/main.css',
-  '/static/js/main.js',
-  '/manifest.json',
-  '/index.html'
-];
+// v3: v2 hat sich NIE installiert. urlsToCache enthielt '/static/css/main.css'
+// und '/static/js/main.js' — CRA erzeugt aber gehashte Namen, beide waren 404.
+// cache.addAll() ist atomar: eine fehlende URL lehnt das ganze Promise ab, in
+// waitUntil() scheitert damit die Installation, und ein nicht installierter
+// Worker wird nie aktiv. Folge: navigator.serviceWorker.ready loeste nie auf.
+const CACHE_NAME = 'coffee-tracker-v3';
+
+// Nur Adressen, die es sicher gibt. Gehashte Bundles bewusst nicht: ihre Namen
+// aendern sich mit jedem Build und muessten hier nachgepflegt werden.
+const urlsToCache = ['/', '/manifest.json', '/index.html'];
 
 self.addEventListener('install', event => {
+  self.skipWaiting();   // nicht auf das Schliessen aller Tabs warten
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache =>
+      // Einzeln statt addAll: ein Fehlschlag darf die Installation nicht
+      // mehr verhindern -- genau daran ist v2 gestorben.
+      Promise.allSettled(urlsToCache.map(u => cache.add(u)))
+    )
   );
 });
 
 self.addEventListener('fetch', event => {
+  // Seitenaufrufe IMMER zuerst aus dem Netz. index.html verweist auf gehashte
+  // Bundle-Namen; aus dem Cache serviert wuerde das Geraet dauerhaft auf einem
+  // alten Stand festhaengen (die Stale-Bundle-Falle aus dem Playbook). Cache
+  // nur als Rueckfall, wenn kein Netz da ist.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request).then(r => r || caches.match('/')))
+    );
+    return;
+  }
+  // Alles andere (gehashte Assets, Bilder) darf cache-first sein: die Namen
+  // sind versioniert, ein Treffer ist per Definition der richtige Inhalt.
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        return response || fetch(event.request);
-      })
+    caches.match(event.request).then(response => response || fetch(event.request))
   );
 });
 
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then(cacheNames => {
+    self.clients.claim().then(() => caches.keys()).then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
