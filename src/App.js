@@ -888,6 +888,17 @@ const CoffeeTracker = () => {
 
             {/* Right: Primary actions + overflow */}
             <div className="flex items-center gap-2">
+              {pushSupported() && pushOn && (
+                <span
+                  title="Nachschub-Alarm ist aktiv — du wirst benachrichtigt, wenn der Kaffee zur Neige geht"
+                  className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${
+                    darkMode ? 'bg-green-900/40 text-green-300' : 'bg-green-50 text-green-700'
+                  }`}
+                >
+                  <Bell className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Alarm aktiv</span>
+                </span>
+              )}
               <button
                 onClick={() => { setShowAnalytics(!showAnalytics); setMobileView('analytics'); }}
                 className={`${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white px-4 py-2 rounded-xl flex items-center space-x-2 transition-colors hidden sm:flex`}
@@ -925,14 +936,17 @@ const CoffeeTracker = () => {
                       { icon: <Lock className="w-4 h-4" />, label: 'Lock App', action: handleLock },
                       { icon: darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />, label: darkMode ? 'Light Mode' : 'Dark Mode', action: toggleDarkMode },
                       { icon: <Settings className="w-4 h-4" />, label: 'Equipment', action: () => setShowEquipmentManager(true) },
-                      // Symbol UND Text zeigen denselben ZUSTAND, nicht die
-                      // Aktion. Vorher zeigte das Symbol den Zustand ("aus")
-                      // und der Text die Aktion ("an") — zusammen unlesbar.
+                      // Der Eintrag ist eine AKTION wie alles andere in diesem
+                      // Menue ("Lock App", "Light Mode"). Der ZUSTAND steht im
+                      // Header — ein Menue ist eine Liste von Dingen, die man
+                      // tut, kein Anzeigefeld.
                       ...(pushSupported() ? [{
-                        icon: pushOn ? <Bell className="w-4 h-4 text-amber-600" /> : <BellOff className="w-4 h-4" />,
+                        icon: pushOn
+                          ? <BellOff className="w-4 h-4 text-red-500" />
+                          : <Bell className="w-4 h-4 text-green-600" />,
                         label: pushBusy
-                          ? 'Nachschub-Alarm: \u2026'
-                          : `Nachschub-Alarm: ${pushOn ? 'an' : 'aus'}`,
+                          ? 'Nachschub-Alarm \u2026'
+                          : (pushOn ? 'Nachschub-Alarm ausschalten' : 'Nachschub-Alarm einschalten'),
                         action: handleTogglePush,
                       }] : []),
                       { divider: true },
