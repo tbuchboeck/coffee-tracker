@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Weiterleitung …</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; min-height: 100vh;
+         display: flex; align-items: center; justify-content: center;
+         background: #faf7f2; color: #4b3a2b; text-align: center; padding: 1.5rem; }
+  a { color: #b45309; }
+</style>
+</head>
+<body>
+<p id="m">Warenkorb wird geöffnet …</p>
+<script>
+// Zwischenstation fuer den Sprung aus einer Push-Meldung zum Shop.
+//
+// Warum ueberhaupt: clients.openWindow() mit einer FREMDEN Adresse verhaelt
+// sich je nach Android/Chrome-Fassung unterschiedlich -- beim Test oeffnete
+// sich statt des Shops die App. Eine Weiterleitung von einer eigenen Seite ist
+// eine ganz normale Navigation und damit verlaesslich.
+(function () {
+  // Feste Liste statt beliebiger Weiterleitung: sonst waere das hier eine
+  // offene Weiterleitung, die sich zum Verschleiern fremder Adressen missbrauchen laesst.
+  var ERLAUBT = {
+    cart: 'https://www.vettore.at/Warenkorb',
+    shop: 'https://www.vettore.at/'
+  };
+  var schluessel = new URLSearchParams(location.search).get('to') || 'cart';
+  var ziel = ERLAUBT[schluessel];
+  var el = document.getElementById('m');
+  if (!ziel) {
+    el.textContent = 'Unbekanntes Ziel.';
+    return;
+  }
+  // replace: die Zwischenstation soll nicht im Verlauf stehen, sonst landet
+  // "zurueck" wieder hier und leitet erneut weiter.
+  location.replace(ziel);
+  // Falls die Weiterleitung blockiert wird, bleibt ein anklickbarer Ausweg.
+  setTimeout(function () {
+    el.innerHTML = 'Weiterleitung hat nicht geklappt. <a href="' + ziel + '">Hier zum Warenkorb</a>';
+  }, 1500);
+})();
+</script>
+</body>
+</html>

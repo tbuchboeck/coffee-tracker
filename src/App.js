@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Coffee, Star, Search, Trash2, Edit3, Calendar, Percent, ExternalLink, BarChart3, Moon, Sun, Download, Upload, FileText, RefreshCw, RotateCcw, Copy, ChevronDown, ChevronUp, Check, Cloud, CloudOff, Database, Lock, MoreHorizontal, Home, Settings } from 'lucide-react';
+import { Plus, Coffee, Star, Search, Trash2, Edit3, Calendar, Percent, ExternalLink, BarChart3, Moon, Sun, Download, Upload, FileText, RefreshCw, RotateCcw, Copy, ChevronDown, ChevronUp, Check, Cloud, CloudOff, Database, Lock, MoreHorizontal, Home, Settings, Bell, BellOff } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
 import { personalCoffees } from './personal_coffees';
 import { coffeeService } from './services/coffeeService';
 import { authService } from './services/authService';
 import AuthScreen from './components/AuthScreen';
+import { pushSupported, pushStatus, enablePush, disablePush, reportFailure } from './services/pushService';
 
 // Extracted modules
 import { brewingMethods } from './constants/brewingMethods';
@@ -59,6 +60,46 @@ const CoffeeTracker = () => {
   // Header overflow menu
   const [showOverflowMenu, setShowOverflowMenu] = useState(false);
   const overflowRef = useRef(null);
+
+  // Nachschub-Alarm (Web Push)
+  const [pushOn, setPushOn] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  // Der Schalter folgt der DB-ZEILE, nicht dem Browser-Abo: der Cron
+  // verschickt nur an das, was in der Tabelle steht.
+  const refreshPush = React.useCallback(async () => {
+    if (!pushSupported()) return null;
+    const st = await pushStatus();
+    setPushOn(st.db);
+    return st;
+  }, []);
+  useEffect(() => { refreshPush().catch(() => {}); }, [refreshPush]);
+  const handleTogglePush = async () => {
+    if (pushBusy) return;
+    setPushBusy(true);
+    try {
+      if (pushOn) {
+        await disablePush();
+        alert('Nachschub-Alarm aus.');
+      } else {
+        await enablePush();
+        alert('Nachschub-Alarm an. Die Meldung kommt, wenn der Vorrat zur Neige geht.');
+      }
+    } catch (e) {
+      // Diagnose mitgeben: ohne sie sieht ein Fehlschlag genauso aus wie
+      // "nichts passiert", und der Schalter erklaert sich nicht.
+      let extra = '';
+      try {
+        const st = await pushStatus();
+        extra = `\n\nStand: Berechtigung=${st.permission}, Browser-Abo=${st.browser ? 'ja' : 'nein'}, `
+              + `Cloud-Zeile=${st.db ? 'ja' : 'nein'}${st.error ? `, Fehler=${st.error}` : ''}`;
+      } catch (_) { /* Diagnose ist Beiwerk, nicht der Zweck */ }
+      reportFailure(pushOn ? 'disable' : 'enable', e.message);
+      alert(`Nachschub-Alarm fehlgeschlagen:\n${e.message}${extra}\n\n(Der Fehler wurde gemeldet.)`);
+    } finally {
+      await refreshPush().catch(() => {});
+      setPushBusy(false);
+    }
+  };
 
   // Filter chips
   const [filterBrewingMethod, setFilterBrewingMethod] = useState(null);
@@ -846,7 +887,21 @@ const CoffeeTracker = () => {
             </div>
 
             {/* Right: Primary actions + overflow */}
-            <div className="flex items-center gap-2">
+            {/* ml-auto: bricht die Gruppe am Handy in eine eigene Zeile um,
+                setzt justify-between sie dort linksbuendig. md:ml-0, damit auf
+                breiten Schirmen der Equipment-Waehler mittig bleibt. */}
+            <div className="flex items-center gap-2 ml-auto md:ml-0">
+              {pushSupported() && pushOn && (
+                <span
+                  title="Nachschub-Alarm ist aktiv — du wirst benachrichtigt, wenn der Kaffee zur Neige geht"
+                  className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium ${
+                    darkMode ? 'bg-green-900/40 text-green-300' : 'bg-green-50 text-green-700'
+                  }`}
+                >
+                  <Bell className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Alarm aktiv</span>
+                </span>
+              )}
               <button
                 onClick={() => { setShowAnalytics(!showAnalytics); setMobileView('analytics'); }}
                 className={`${darkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'} text-white px-4 py-2 rounded-xl flex items-center space-x-2 transition-colors hidden sm:flex`}
@@ -884,6 +939,27 @@ const CoffeeTracker = () => {
                       { icon: <Lock className="w-4 h-4" />, label: 'Lock App', action: handleLock },
                       { icon: darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />, label: darkMode ? 'Light Mode' : 'Dark Mode', action: toggleDarkMode },
                       { icon: <Settings className="w-4 h-4" />, label: 'Equipment', action: () => setShowEquipmentManager(true) },
+                      // Der Eintrag ist eine AKTION wie alles andere in diesem
+                      // Menue ("Lock App", "Light Mode"). Der ZUSTAND steht im
+                      // Header — ein Menue ist eine Liste von Dingen, die man
+                      // tut, kein Anzeigefeld.
+                      ...(pushSupported() ? [{
+                        icon: pushOn
+                          ? <BellOff className="w-4 h-4 text-red-500" />
+                          : <Bell className="w-4 h-4 text-green-600" />,
+                        label: pushBusy
+                          ? 'Alarm \u2026'
+                          // Gemessen: "Nachschub-Alarm ausschalten" braucht 293 px,
+                          // das Menue ist 224 breit -> zweizeilig. Gekuerzt 200 px.
+                          // "Alarm" ist eindeutig: es gibt nur einen, und die
+                          // Plakette im Header heisst ebenso "Alarm aktiv".
+                          : (pushOn ? 'Alarm ausschalten' : 'Alarm einschalten'),
+                        action: handleTogglePush,
+                      }] : []),
+                      // Zweiter Weg zum Warenkorb: die Push-Meldung ist der
+                      // erste, aber sie laesst sich wegwischen.
+                      { icon: <ExternalLink className="w-4 h-4" />, label: 'Kaffee nachbestellen',
+                        action: () => window.open('https://www.vettore.at/Warenkorb', '_blank', 'noopener') },
                       { divider: true },
                       { icon: <RotateCcw className="w-4 h-4 text-red-500" />, label: 'Reset All Data', action: handleResetToDefaults, danger: true },
                     ].map((item, i) =>
