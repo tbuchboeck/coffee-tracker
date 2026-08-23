@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Coffee, Star, Search, Trash2, Edit3, Calendar, Percent, ExternalLink, BarChart3, Moon, Sun, Download, Upload, FileText, RefreshCw, RotateCcw, Copy, ChevronDown, ChevronUp, Check, Cloud, CloudOff, Database, Lock, MoreHorizontal, Home, Settings } from 'lucide-react';
+import { Plus, Coffee, Star, Search, Trash2, Edit3, Calendar, Percent, ExternalLink, BarChart3, Moon, Sun, Download, Upload, FileText, RefreshCw, RotateCcw, Copy, ChevronDown, ChevronUp, Check, Cloud, CloudOff, Database, Lock, MoreHorizontal, Home, Settings, Bell, BellOff } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from 'jspdf';
 import { personalCoffees } from './personal_coffees';
 import { coffeeService } from './services/coffeeService';
 import { authService } from './services/authService';
 import AuthScreen from './components/AuthScreen';
+import { supabase } from './supabaseClient';
+import { pushSupported, currentSubscription, enablePush, disablePush } from './services/pushService';
 
 // Extracted modules
 import { brewingMethods } from './constants/brewingMethods';
@@ -59,6 +61,28 @@ const CoffeeTracker = () => {
   // Header overflow menu
   const [showOverflowMenu, setShowOverflowMenu] = useState(false);
   const overflowRef = useRef(null);
+
+  // Nachschub-Alarm (Web Push)
+  const [pushOn, setPushOn] = useState(false);
+  useEffect(() => {
+    if (!pushSupported()) return;
+    currentSubscription().then(s => setPushOn(Boolean(s))).catch(() => {});
+  }, []);
+  const handleTogglePush = async () => {
+    try {
+      if (pushOn) {
+        await disablePush(supabase);
+        setPushOn(false);
+        alert('Nachschub-Alarm aus.');
+      } else {
+        await enablePush(supabase);
+        setPushOn(true);
+        alert('Nachschub-Alarm an. Die Meldung kommt, wenn der Vorrat zur Neige geht.');
+      }
+    } catch (e) {
+      alert(`Nachschub-Alarm: ${e.message}`);
+    }
+  };
 
   // Filter chips
   const [filterBrewingMethod, setFilterBrewingMethod] = useState(null);
@@ -884,6 +908,11 @@ const CoffeeTracker = () => {
                       { icon: <Lock className="w-4 h-4" />, label: 'Lock App', action: handleLock },
                       { icon: darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />, label: darkMode ? 'Light Mode' : 'Dark Mode', action: toggleDarkMode },
                       { icon: <Settings className="w-4 h-4" />, label: 'Equipment', action: () => setShowEquipmentManager(true) },
+                      ...(pushSupported() ? [{
+                        icon: pushOn ? <Bell className="w-4 h-4 text-amber-600" /> : <BellOff className="w-4 h-4" />,
+                        label: pushOn ? 'Nachschub-Alarm aus' : 'Nachschub-Alarm an',
+                        action: handleTogglePush,
+                      }] : []),
                       { divider: true },
                       { icon: <RotateCcw className="w-4 h-4 text-red-500" />, label: 'Reset All Data', action: handleResetToDefaults, danger: true },
                     ].map((item, i) =>
