@@ -80,3 +80,25 @@ test('der Worker meldet seine Version beim Aktivieren', () => {
   assert.ok(act.indexOf('.catch(() => {})') < act.indexOf('event.waitUntil'),
     'die Meldung muss fire-and-forget vor waitUntil stehen');
 });
+
+test('externe Ziele laufen ueber die eigene Bruecke, nicht direkt', () => {
+  // clients.openWindow() mit fremder Adresse oeffnete auf Android die App
+  // statt des Shops. /go.html leitet per location.replace weiter -- eine
+  // normale Navigation und damit verlaesslich.
+  const h = SW.slice(SW.indexOf("addEventListener('notificationclick'"));
+  const extern = h.slice(h.indexOf('if (!sameOrigin)'), h.indexOf('melde(\'click\''));
+  assert.match(extern, /go\.html\?to=cart/);
+  assert.ok(!/openWindow\(target\)/.test(extern),
+    'die fremde Adresse darf nicht mehr direkt an openWindow gehen');
+});
+
+test('die Bruecke leitet nur auf erlaubte Ziele weiter', () => {
+  // Ohne feste Liste waere das eine offene Weiterleitung.
+  const go = fs.readFileSync(path.join(ROOT, 'public', 'go.html'), 'utf8');
+  assert.match(go, /ERLAUBT/);
+  assert.match(go, /vettore\.at\/Warenkorb/);
+  assert.match(go, /location\.replace/);
+  // Kein Durchreichen beliebiger Adressen aus dem Parameter
+  assert.ok(!/location\.replace\(\s*(new URLSearchParams|params|ziel\s*=\s*.*get)/.test(go));
+  assert.match(go, /ERLAUBT\[schluessel\]/);
+});

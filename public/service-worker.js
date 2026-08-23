@@ -10,7 +10,7 @@ const CACHE_NAME = 'coffee-tracker-v3';
 // auf einem Geraet laeuft. Ohne das ist "der Nutzer hat noch den alten Worker"
 // eine Vermutung statt einer Feststellung -- und genau daran haben sich hier
 // schon zwei Fehlersuchen aufgehalten. Bei jeder Aenderung hochzaehlen.
-const SW_VERSION = 'v3.1-warenkorb-link';
+const SW_VERSION = 'v3.2-go-weiterleitung';
 
 // Nur Adressen, die es sicher gibt. Gehashte Bundles bewusst nicht: ihre Namen
 // aendern sich mit jedem Build und muessten hier nachgepflegt werden.
@@ -106,11 +106,29 @@ self.addEventListener('notificationclick', event => {
     sameOrigin = true;
   }
 
+  const melde = (schritt, text) => fetch('/api/push/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ kind: 'diag', step: schritt, message: text }),
+  }).catch(() => {});
+
   event.waitUntil((async () => {
-    // Externes Ziel: NIE ein vorhandenes App-Fenster fokussieren. Genau das
-    // hat den Link vorher verschluckt -- der alte Handler fokussierte immer
-    // zuerst und kam an openWindow gar nicht mehr vorbei.
-    if (!sameOrigin) return self.clients.openWindow(target);
+    if (!sameOrigin) {
+      // NICHT direkt openWindow(fremde Adresse): das oeffnete auf Android die
+      // App statt des Shops. Ueber die eigene Zwischenseite /go.html, die per
+      // location.replace weiterleitet -- eine normale Navigation, verlaesslich.
+      const brueckeUrl = `/go.html?to=cart`;
+      let ergebnis = 'openWindow(go)';
+      try {
+        const w = await self.clients.openWindow(brueckeUrl);
+        ergebnis += w ? ' -> Fenster' : ' -> null';
+      } catch (err) {
+        ergebnis += ' -> Fehler: ' + err.message;
+      }
+      melde('click', `action=${event.action || '(tipp)'} ziel=${target} extern=ja ${ergebnis}`);
+      return;
+    }
+    melde('click', `action=${event.action || '(tipp)'} ziel=${target} extern=nein`);
 
     const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const w of wins) {
