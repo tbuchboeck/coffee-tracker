@@ -887,7 +887,10 @@ const CoffeeTracker = () => {
             </div>
 
             {/* Right: Primary actions + overflow */}
-            <div className="flex items-center gap-2">
+            {/* ml-auto: bricht die Gruppe am Handy in eine eigene Zeile um,
+                setzt justify-between sie dort linksbuendig. md:ml-0, damit auf
+                breiten Schirmen der Equipment-Waehler mittig bleibt. */}
+            <div className="flex items-center gap-2 ml-auto md:ml-0">
               {pushSupported() && pushOn && (
                 <span
                   title="Nachschub-Alarm ist aktiv — du wirst benachrichtigt, wenn der Kaffee zur Neige geht"
@@ -945,8 +948,12 @@ const CoffeeTracker = () => {
                           ? <BellOff className="w-4 h-4 text-red-500" />
                           : <Bell className="w-4 h-4 text-green-600" />,
                         label: pushBusy
-                          ? 'Nachschub-Alarm \u2026'
-                          : (pushOn ? 'Nachschub-Alarm ausschalten' : 'Nachschub-Alarm einschalten'),
+                          ? 'Alarm \u2026'
+                          // Gemessen: "Nachschub-Alarm ausschalten" braucht 293 px,
+                          // das Menue ist 224 breit -> zweizeilig. Gekuerzt 200 px.
+                          // "Alarm" ist eindeutig: es gibt nur einen, und die
+                          // Plakette im Header heisst ebenso "Alarm aktiv".
+                          : (pushOn ? 'Alarm ausschalten' : 'Alarm einschalten'),
                         action: handleTogglePush,
                       }] : []),
                       { divider: true },
