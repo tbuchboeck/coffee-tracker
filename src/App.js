@@ -6,7 +6,6 @@ import { personalCoffees } from './personal_coffees';
 import { coffeeService } from './services/coffeeService';
 import { authService } from './services/authService';
 import AuthScreen from './components/AuthScreen';
-import { supabase } from './supabaseClient';
 import { pushSupported, pushStatus, enablePush, disablePush } from './services/pushService';
 
 // Extracted modules
@@ -69,7 +68,7 @@ const CoffeeTracker = () => {
   // verschickt nur an das, was in der Tabelle steht.
   const refreshPush = React.useCallback(async () => {
     if (!pushSupported()) return null;
-    const st = await pushStatus(supabase);
+    const st = await pushStatus();
     setPushOn(st.db);
     return st;
   }, []);
@@ -79,10 +78,10 @@ const CoffeeTracker = () => {
     setPushBusy(true);
     try {
       if (pushOn) {
-        await disablePush(supabase);
+        await disablePush();
         alert('Nachschub-Alarm aus.');
       } else {
-        await enablePush(supabase);
+        await enablePush();
         alert('Nachschub-Alarm an. Die Meldung kommt, wenn der Vorrat zur Neige geht.');
       }
     } catch (e) {
@@ -90,7 +89,7 @@ const CoffeeTracker = () => {
       // "nichts passiert", und der Schalter erklaert sich nicht.
       let extra = '';
       try {
-        const st = await pushStatus(supabase);
+        const st = await pushStatus();
         extra = `\n\nStand: Berechtigung=${st.permission}, Browser-Abo=${st.browser ? 'ja' : 'nein'}, `
               + `Cloud-Zeile=${st.db ? 'ja' : 'nein'}${st.error ? `, Fehler=${st.error}` : ''}`;
       } catch (_) { /* Diagnose ist Beiwerk, nicht der Zweck */ }

@@ -70,3 +70,20 @@ test('Meldungstext nennt Datum und Reststand', () => {
   assert.match(crit.body, /leer/i);
   assert.equal(crit.requireInteraction, true);
 });
+
+/* --- Eingabepruefung des Anmelde-Endpunkts ------------------------------- */
+const { validEndpoint } = require('./subscribe.js');
+
+test('nur echte Push-Dienste werden angenommen', () => {
+  // Der Endpunkt ist absichtlich unauthentifiziert (der Browser hat hier
+  // keinen brauchbaren Ausweis) — die Host-Liste IST die Vertrauensgrenze.
+  assert.ok(validEndpoint('https://fcm.googleapis.com/fcm/send/abc123'));
+  assert.ok(validEndpoint('https://updates.push.services.mozilla.com/wpush/v2/xyz'));
+  assert.ok(validEndpoint('https://web.push.apple.com/QAB'));
+  assert.ok(!validEndpoint('https://evil.example.com/x'), 'fremder Host');
+  assert.ok(!validEndpoint('http://fcm.googleapis.com/x'), 'kein TLS');
+  assert.ok(!validEndpoint('kein-url'), 'unparsbar');
+  assert.ok(!validEndpoint(''), 'leer');
+  // Kein Teilstring-Treffer: der Host muss wirklich enden wie erlaubt
+  assert.ok(!validEndpoint('https://fcm.googleapis.com.evil.tld/x'), 'Suffix-Trick');
+});

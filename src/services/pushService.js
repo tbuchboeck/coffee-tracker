@@ -6,8 +6,16 @@
 export const VAPID_PUBLIC_KEY =
   'BEEXWLxBG2R-rcaeXzKajw8hJn2y0kgBZA8rO2C1B7HHz1lgGGjkh-2FjOavp_F0LvfrUCwowGTFOnxOW7YngdQ';
 
-const TABLE = 'coffee_push_subscriptions';
+const API = '/api/push/subscribe';
 const STEP_TIMEOUT_MS = 12000;
+
+async function api(path, opts) {
+  const r = await withTimeout(fetch(path, opts), STEP_TIMEOUT_MS, 'Server');
+  let body = {};
+  try { body = await r.json(); } catch (e) { /* leere Antwort ist ok */ }
+  if (!r.ok) throw new Error(body.error || `Server antwortete ${r.status}`);
+  return body;
+}
 
 export function pushSupported() {
   return (
@@ -59,21 +67,16 @@ export async function browserSubscription() {
 /* Wahrheit ist die DB-Zeile, nicht das Browser-Abo: der Cron verschickt nur an
  * das, was in der Tabelle steht. Ein Browser-Abo ohne Zeile bedeutet, dass
  * keine Meldung kommt — der Schalter muss dann AUS zeigen. */
-export async function pushStatus(supabase) {
+export async function pushStatus() {
   const status = { supported: pushSupported(), permission: null, browser: false, db: false, error: null };
   if (!status.supported) return status;
   status.permission = Notification.permission;
   try {
     const sub = await browserSubscription();
     status.browser = Boolean(sub);
-    if (sub && supabase) {
-      const { data, error } = await supabase
-        .from(TABLE)
-        .select('endpoint')
-        .eq('endpoint', sub.toJSON().endpoint)
-        .maybeSingle();
-      if (error) status.error = error.message;
-      else status.db = Boolean(data);
+    if (sub) {
+      const r = await api(`${API}?endpoint=${encodeURIComponent(sub.toJSON().endpoint)}`);
+      status.db = Boolean(r.subscribed);
     }
   } catch (e) {
     status.error = e.message;
@@ -81,9 +84,8 @@ export async function pushStatus(supabase) {
   return status;
 }
 
-export async function enablePush(supabase) {
+export async function enablePush() {
   if (!pushSupported()) throw new Error('Dieser Browser kann kein Web Push');
-  if (!supabase) throw new Error('Keine Cloud-Verbindung — Nachschub-Alarm braucht Supabase');
 
   const permission = await withTimeout(Notification.requestPermission(), STEP_TIMEOUT_MS, 'Berechtigungsdialog');
   if (permission !== 'granted') throw new Error(`Benachrichtigungen sind "${permission}"`);
@@ -102,32 +104,25 @@ export async function enablePush(supabase) {
   }
 
   const json = sub.toJSON();
-  const { error } = await supabase.from(TABLE).upsert(
-    {
-      endpoint: json.endpoint,
-      p256dh: json.keys.p256dh,
-      auth: json.keys.auth,
-      user_agent: (navigator.userAgent || '').slice(0, 200),
-    },
-    { onConflict: 'endpoint' }
-  );
-  if (error) throw new Error(`Speichern in der Cloud: ${error.message}`);
+  await api(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+  });
 
-  // Rueckprobe: der Schreibvorgang gilt erst als erfolgt, wenn die Zeile
-  // wieder gelesen werden kann. Ein 2xx ohne Zeile ist bei RLS moeglich.
-  const { data, error: readErr } = await supabase
-    .from(TABLE).select('endpoint').eq('endpoint', json.endpoint).maybeSingle();
-  if (readErr) throw new Error(`Rueckprobe: ${readErr.message}`);
-  if (!data) throw new Error('Zeile nach dem Speichern nicht auffindbar — vermutlich abgelaufene Anmeldung. App sperren und neu per Passkey anmelden.');
+  // Rueckprobe am Zielobjekt: erst wenn der Server die Zeile wiederfindet,
+  // gilt die Anmeldung als erfolgt.
+  const check = await api(`${API}?endpoint=${encodeURIComponent(json.endpoint)}`);
+  if (!check.subscribed) throw new Error('Server meldet die Zeile nicht zurueck');
 
   return json.endpoint;
 }
 
-export async function disablePush(supabase) {
+export async function disablePush() {
   const sub = await browserSubscription();
   if (!sub) return false;
   const { endpoint } = sub.toJSON();
   await sub.unsubscribe();
-  if (supabase) await supabase.from(TABLE).delete().eq('endpoint', endpoint);
+  await api(`${API}?endpoint=${encodeURIComponent(endpoint)}`, { method: 'DELETE' });
   return true;
 }
