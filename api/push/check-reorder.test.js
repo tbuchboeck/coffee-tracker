@@ -152,3 +152,17 @@ test('kein Meldungstext enthaelt jemals "null" oder "undefined"', () => {
   assert.match(o.body, /2026-08-28/);
   assert.match(o.title, /unterwegs/);
 });
+
+test('jeder Lauf schreibt ein Lebenszeichen, vor allen Ausstiegen', () => {
+  // notified_on entsteht nur beim Senden. Ohne last_check_at haette ein toter
+  // Cron dieselbe Spur wie ein ruhiger: naemlich keine.
+  const src = fs.readFileSync(path.join(__dirname, 'check-reorder.js'), 'utf8');
+  const h = src.slice(src.indexOf('module.exports = async function handler'));
+  const lebenszeichen = h.indexOf("'cron-run'");
+  assert.ok(lebenszeichen > 0, 'kein Lebenszeichen pro Lauf');
+  // muss VOR dem ok/ordered-Ausstieg stehen, sonst fehlt es im Normalfall
+  assert.ok(lebenszeichen < h.indexOf("cond.tier === 'ok'"),
+    'das Lebenszeichen steht hinter einem frueheren return');
+  assert.ok(lebenszeichen < h.indexOf('heute schon gemeldet'),
+    'das Lebenszeichen steht hinter dem Stummschalter');
+});
