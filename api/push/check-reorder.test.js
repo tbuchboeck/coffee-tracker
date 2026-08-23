@@ -137,3 +137,18 @@ test('unbrauchbares suppress_until wird ignoriert, nicht geglaubt', () => {
   assert.equal(evaluate({ ...base, suppress_until: 'Unsinn' }, day('2026-08-24')).tier, 'warn');
   assert.equal(evaluate({ ...base, suppress_until: null }, day('2026-08-24')).tier, 'warn');
 });
+
+test('kein Meldungstext enthaelt jemals "null" oder "undefined"', () => {
+  // Der 'ordered'-Zustand hat kein Leerdatum; der Standardtext machte daraus
+  // "Leer am null (noch null Tage)" und ging so an ein echtes Geraet raus.
+  for (const t of ['warn', 'urgent', 'critical']) {
+    const p = buildPayload(evaluate(base, day('2026-09-05')).tier === t
+      ? evaluate(base, day('2026-09-05')) : { ...evaluate(base, day('2026-08-27')), tier: t });
+    assert.ok(!/null|undefined/.test(p.title + p.body), `${t}: ${p.body}`);
+  }
+  const o = buildPayload({ tier: 'ordered', suppressedUntil: '2026-08-28',
+                           empty: null, reorder: null, daysLeft: null });
+  assert.ok(!/null|undefined/.test(o.title + o.body), o.body);
+  assert.match(o.body, /2026-08-28/);
+  assert.match(o.title, /unterwegs/);
+});

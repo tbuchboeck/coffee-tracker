@@ -76,6 +76,16 @@ function evaluate(stock, today) {
 }
 
 function buildPayload(c) {
+  // 'ordered' zuerst: dort sind empty/reorder/daysLeft null, und der
+  // Standardtext haette daraus "Leer am null (noch null Tage)" gemacht.
+  if (c.tier === 'ordered') {
+    return {
+      title: '☕ Kaffee ist unterwegs',
+      body: `Bestellung laeuft, Lieferung erwartet bis ${c.suppressedUntil}. Bis dahin keine Erinnerung.`,
+      tag: 'coffee-reorder', requireInteraction: false, url: CART_URL,
+      actions: [{ action: 'app', title: 'App oeffnen' }],
+    };
+  }
   const title = {
     warn: '☕ Kaffee geht zur Neige',
     urgent: '☕ Kaffee bestellen — jetzt',
