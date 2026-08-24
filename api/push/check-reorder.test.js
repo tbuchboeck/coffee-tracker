@@ -166,3 +166,17 @@ test('jeder Lauf schreibt ein Lebenszeichen, vor allen Ausstiegen', () => {
   assert.ok(lebenszeichen < h.indexOf('heute schon gemeldet'),
     'das Lebenszeichen steht hinter dem Stummschalter');
 });
+
+test('?test=1 ist keine Eintrittskarte mehr', () => {
+  // Vorher: `if (!isCron && !isTest) return 401` -- der Testschalter allein
+  // genuegte. Der Endpunkt ist oeffentlich, also konnte jeder mit der Adresse
+  // eine Push-Nachricht auf das Geraet des Nutzers ausloesen.
+  const src = fs.readFileSync(path.join(__dirname, 'check-reorder.js'), 'utf8');
+  const h = src.slice(src.indexOf('module.exports = async function handler'));
+  const wache = h.slice(0, h.indexOf('let client'));
+  assert.match(wache, /if \(!isCron\) return res\.status\(401\)/);
+  assert.ok(!/!isCron && !isTest/.test(wache), 'isTest umgeht die Pruefung noch');
+  // Die Wache muss VOR der Auswertung von test=1 greifen
+  assert.ok(wache.indexOf('if (!isCron)') < wache.indexOf("query.test === '1'"),
+    'die Zugangspruefung steht hinter der Testschalter-Auswertung');
+});
