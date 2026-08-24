@@ -112,10 +112,17 @@ function connectionString(env = process.env) {
 }
 
 module.exports = async function handler(req, res) {
-  const isTest = req.query && req.query.test === '1';
+  // Der Schluessel wird IMMER verlangt. `?test=1` aendert nur noch das
+  // VERHALTEN (senden trotz tier=ok, Stummschalter uebergehen), nicht mehr den
+  // ZUGANG. Vorher genuegte der Testschalter allein als Eintrittskarte -- und
+  // der Endpunkt ist oeffentlich erreichbar, also konnte jeder mit der Adresse
+  // eine Push-Nachricht auf das Geraet des Nutzers ausloesen (am 2026-08-24 in
+  // den Diagnosedaten aufgefallen: ein Lauf mit user_agent 'test=1', den kein
+  // Zeitplan erklaert).
   const expected = process.env.CRON_SECRET ? `Bearer ${process.env.CRON_SECRET}` : null;
   const isCron = Boolean(expected) && req.headers.authorization === expected;
-  if (!isCron && !isTest) return res.status(401).json({ error: 'unauthorized' });
+  if (!isCron) return res.status(401).json({ error: 'unauthorized' });
+  const isTest = req.query && req.query.test === '1';
 
   let client;
   try {
