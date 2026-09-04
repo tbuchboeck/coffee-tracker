@@ -4,6 +4,7 @@ import { LineChart, Line, BarChart, Bar, RadarChart, PolarGrid, PolarAngleAxis, 
 import jsPDF from 'jspdf';
 import { personalCoffees } from './personal_coffees';
 import { coffeeService } from './services/coffeeService';
+import { purchaseService, EMPTY_PURCHASE_SUMMARY } from './services/purchaseService';
 import { authService } from './services/authService';
 import AuthScreen from './components/AuthScreen';
 import { pushSupported, pushStatus, enablePush, disablePush, reportFailure } from './services/pushService';
@@ -27,6 +28,7 @@ const defaultCoffees = personalCoffees;
 
 const CoffeeTracker = () => {
   const [coffees, setCoffees] = useState([]);
+  const [purchases, setPurchases] = useState(EMPTY_PURCHASE_SUMMARY);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingCoffee, setEditingCoffee] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -151,6 +153,10 @@ const CoffeeTracker = () => {
           }));
           setCoffees(coffeesWithDates);
         }
+
+        // Kaufhistorie ist Beiwerk: getSummary() schluckt eigene Fehler und
+        // liefert dann eine leere Zusammenfassung, damit die Sammlung laedt.
+        setPurchases(await purchaseService.getSummary());
 
         setCloudStatus(prev => ({
           ...prev,
@@ -1012,12 +1018,19 @@ const CoffeeTracker = () => {
           {isLoading ? (
             <StatsSkeleton darkMode={darkMode} />
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {[
                 { value: coffees.length, label: 'Total Coffees', color: 'text-amber-600' },
                 { value: coffees.filter(c => c.favorite).length, label: 'Favorites', color: 'text-amber-600' },
                 { value: coffees.length > 0 ? (coffees.reduce((sum, c) => sum + c.tasteRating, 0) / coffees.length).toFixed(1) : '0', label: 'Avg Rating', color: 'text-amber-600' },
                 { value: analytics.avgCostPerCup ? `${analytics.avgCostPerCup} €` : 'N/A', label: 'Avg Cost/Cup', color: 'text-green-600' },
+                {
+                  value: purchases.totals.bags,
+                  label: purchases.totals.bags > 0
+                    ? `Beutel gekauft · ${purchases.totals.amount.toFixed(2)} €`
+                    : 'Beutel gekauft',
+                  color: 'text-sky-600',
+                },
               ].map((stat, i) => (
                 <div key={i} className={`${darkMode ? 'bg-gray-700/50' : 'bg-amber-50/80'} p-4 rounded-xl transition-colors`}>
                   <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
@@ -1625,7 +1638,7 @@ const CoffeeTracker = () => {
               // Flat list for price/value sorting
               if (['priceLowHigh', 'priceHighLow', 'value'].includes(sortBy)) {
                 return filteredCoffees.map((coffee) => (
-                  <CoffeeCardDisplay key={coffee.id} coffee={coffee} darkMode={darkMode}
+                  <CoffeeCardDisplay key={coffee.id} coffee={coffee} darkMode={darkMode} purchase={purchases.byCoffee[coffee.id]}
                     onEdit={() => handleEdit(coffee)} onDelete={() => handleDelete(coffee.id)}
                     onToggleFavorite={() => handleToggleFavorite(coffee.id)} onDuplicate={() => handleCopy(coffee)}
                     onShowRadar={setSelectedCoffeeForRadar} brewingMethods={brewingMethods}
@@ -1705,7 +1718,7 @@ const CoffeeTracker = () => {
                     {!isCollapsed && (
                       <div className="grid gap-4 ml-4 animate-collapse-expand">
                         {roasterCoffees.map(coffee => (
-                          <CoffeeCardDisplay key={coffee.id} coffee={coffee} darkMode={darkMode}
+                          <CoffeeCardDisplay key={coffee.id} coffee={coffee} darkMode={darkMode} purchase={purchases.byCoffee[coffee.id]}
                             onEdit={() => handleEdit(coffee)} onDelete={() => handleDelete(coffee.id)}
                             onToggleFavorite={() => handleToggleFavorite(coffee.id)} onDuplicate={() => handleCopy(coffee)}
                             onShowRadar={setSelectedCoffeeForRadar} brewingMethods={brewingMethods}
@@ -1818,7 +1831,7 @@ const CoffeeTracker = () => {
 };
 
 // ==================== COFFEE CARD COMPONENT ====================
-const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorite, onDuplicate, onShowRadar, brewingMethods, countryFlags, getRoastBadge, calculateCostPerCup, calculateValueScore, getEfficiencyColor, getEfficiencyBgColor, getEfficiencyLabel, equipmentName }) => {
+const CoffeeCardDisplay = ({ coffee, purchase, darkMode, onEdit, onDelete, onToggleFavorite, onDuplicate, onShowRadar, brewingMethods, countryFlags, getRoastBadge, calculateCostPerCup, calculateValueScore, getEfficiencyColor, getEfficiencyBgColor, getEfficiencyLabel, equipmentName }) => {
   const [imgError, setImgError] = React.useState(false);
   const [expanded, setExpanded] = React.useState(false);
   const roastBadge = getRoastBadge(coffee.roastLevel);
@@ -1887,6 +1900,19 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
                 <span className={`px-1.5 py-0.5 rounded-full font-medium ${getEfficiencyBgColor(valueScore, darkMode)} ${getEfficiencyColor(valueScore, darkMode)}`}>{getEfficiencyLabel(valueScore)}</span>
               </>
             )}
+            {/* Nur echte Wiederkaeufe: "1x gekauft" auf jeder Karte waere Rauschen,
+                die vollstaendige Historie steht unten in der Detailansicht. */}
+            {purchase && purchase.bags > 1 && (
+              <>
+                <span className={`${darkMode ? 'text-gray-600' : 'text-gray-300'}`}>|</span>
+                <span
+                  className={`font-bold ${darkMode ? 'text-sky-400' : 'text-sky-600'}`}
+                  title={`${purchase.bags} Beutel in ${purchase.orders.length} Bestellungen, zuletzt ${purchase.last}`}
+                >
+                  {purchase.bags}× gekauft
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -1934,6 +1960,28 @@ const CoffeeCardDisplay = ({ coffee, darkMode, onEdit, onDelete, onToggleFavorit
               </span>
             )}
           </div>
+
+          {/* Kaufhistorie — der Preis oben ist der Erstkaufpreis, hier steht,
+              was wirklich bezahlt wurde und wie oft. */}
+          {purchase && (
+            <div className="mb-3">
+              <div className={`text-xs font-semibold mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {purchase.bags}× gekauft · {purchase.amount.toFixed(2)} € gesamt
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {purchase.orders.map((o, i) => (
+                  <span
+                    key={`${o.orderedOn}-${o.orderNo || i}`}
+                    className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-sky-900/50 text-sky-200' : 'bg-sky-100 text-sky-800'}`}
+                    title={o.orderNo ? `Bestellung ${o.orderNo}${o.shop ? ` bei ${o.shop}` : ''}` : undefined}
+                  >
+                    {new Date(o.orderedOn).toLocaleDateString()}
+                    {o.bags > 1 ? ` · ${o.bags}×` : ''} {o.unitPrice.toFixed(2)} €
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Origin country flags */}
           {coffee.origin && (
