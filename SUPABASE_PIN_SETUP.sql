@@ -11,6 +11,12 @@ CREATE TABLE IF NOT EXISTS app_config (
   value TEXT NOT NULL
 );
 
+-- Explizite Data-API-Grants: ab 30.10.2026 vergibt Supabase sie für neue
+-- Tabellen in public nicht mehr automatisch. pinService.js liest den Hash vor
+-- dem Login, also mit dem anon key, und nur lesend.
+GRANT SELECT ON app_config TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON app_config TO service_role;
+
 -- ========================================
 -- SCHRITT 2: PIN setzen
 -- ========================================
